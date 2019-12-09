@@ -5,7 +5,8 @@ Collection of all the tables used by PeakSQL.
 spe = "Species (" \
       "    SpeciesId INTEGER PRIMARY KEY AUTOINCREMENT," \
       "    Assembly TEXT UNIQUE," \
-      "    Name TEXT" \
+      "    Name TEXT," \
+      "    AbsPath TEXT UNIQUE NOT NULL" \
       ")"
 
 # Chromosome table
@@ -13,7 +14,7 @@ chr = "Chromosome (" \
       "    ChromosomeId INTEGER PRIMARY KEY AUTOINCREMENT," \
       "    Chromosome TEXT," \
       "    Size INT NOT NULL," \
-      "    SpeciesId," \
+      "    SpeciesId NOT NULL," \
       "    FOREIGN KEY(SpeciesId) REFERENCES Species(SpeciesId)" \
       ")"
 
@@ -21,16 +22,16 @@ chr = "Chromosome (" \
 con = "Condition (" \
       "    ConditionId INTEGER PRIMARY KEY AUTOINCREMENT, " \
       "    Condition TEXT," \
-      "    SpeciesId," \
+      "    SpeciesId NOT NULL," \
       "    FOREIGN KEY(SpeciesId) REFERENCES Species(SpeciesId)" \
       ")"
 
 # Bed table
 bed = ("Bed (" 
        "    BedId INTEGER PRIMARY KEY AUTOINCREMENT, " 
-       "    SpeciesId," 
-       "    ConditionId," 
-       "    ChromosomeId,"             # 1.  chrom (chrom ID not name) (REQUIRED)
+       "    SpeciesId NOT NULL," 
+       "    ConditionId NOT NULL," 
+       "    ChromosomeId NOT NULL,"    # 1.  chrom (chrom ID not name) (REQUIRED)
        "    ChromStart INT NOT NULL,"  # 2.  chromStart                (REQUIRED)
        "    ChromStop INT NOT NULL,"   # 3.  chromEnd                  (REQUIRED)
        "    Name TEXT,"                # 4.  name

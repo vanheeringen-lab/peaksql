@@ -4,30 +4,32 @@ All the SQL stuff
 import os
 
 import pybedtools
+import pyfaidx
 
 
-def add_assembly(self, sizes_file, assembly=None, species=None):
+def add_assembly(self, assembly_file, assembly=None, species=None):
     """
 
     """
     # set defaults if none provided
-    assembly = assembly if assembly is not None else os.path.basename(sizes_file).split('.')[0]
+    assembly = assembly if assembly is not None else os.path.basename(assembly_file).split('.')[0]
     species = species if species is not None else assembly
 
     # Make sure the assembly hasn't been added yet
     assert assembly not in self.assemblies, f"Assembly '{assembly}' has already been added " \
                                             f"to the database!"
 
-    self.cursor.execute(f"INSERT INTO Species (assembly, name) "
-                        f"VALUES ('{assembly}', '{species}')")
+    self.cursor.execute(f"INSERT INTO Species (assembly, name, abspath) "
+                        f"VALUES ('{assembly}', '{species}', '{assembly_file}')")
     species_id = self.get_id('Species', 'Assembly', assembly)
 
     # now load the chromosome sizes
-    with open(sizes_file, 'r') as f:
-        for chromosome in f.readlines():
-            chromosome, size = chromosome.split()
-            self.cursor.execute(f"INSERT INTO Chromosome (SpeciesId, Size, Chromosome) "
-                                f"    VALUES('{species_id}', '{size}', '{chromosome}')")
+    fasta = pyfaidx.Fasta(assembly_file)
+    self.open_files[assembly_file] = fasta
+    for sequence_name in fasta.keys():
+        sequence = fasta[sequence_name]
+        self.cursor.execute(f"INSERT INTO Chromosome (SpeciesId, Size, Chromosome) "
+                            f"    VALUES('{species_id}', '{len(sequence)}', '{sequence_name}')")
 
     self.conn.commit()
 

@@ -13,6 +13,8 @@ class DataBase(object):
         self.conn = sqlite3.connect(db)
         self.cursor = self.conn.cursor()
 
+        self.open_files = {}
+
         # register all the tables (Species, Chromosome, Condition, Peak)
         for table in [table for table in dir(tables) if not table.startswith('__')]:
             self.cursor.execute(f"CREATE TABLE IF NOT EXISTS {getattr(tables, table)}")
@@ -21,6 +23,7 @@ class DataBase(object):
 
     # imported methods
     from ._database_sql import add_data, add_assembly, get_id
+    # from ._database_fasta import
 
     @property
     def assemblies(self):
