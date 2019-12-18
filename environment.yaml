@@ -1,7 +1,0 @@
-name: PeakSQL
-channels:
-  - bioconda
-  - conda-forge
-  - defaults
-dependencies:
-  -
