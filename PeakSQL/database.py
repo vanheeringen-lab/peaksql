@@ -11,7 +11,7 @@ import pyfaidx
 
 
 class DataBase(object):
-    def __init__(self, db='PeakSQL.sqlite'):
+    def __init__(self, db="PeakSQL.sqlite"):
         self.db = db
 
         self.conn = sqlite3.connect(db)
@@ -20,7 +20,7 @@ class DataBase(object):
         self.open_files = {}
 
         # register all the tables (Assembly, Chromosome, Condition, Peak)
-        for table in [table for table in dir(tables) if not table.startswith('__')]:
+        for table in [table for table in dir(tables) if not table.startswith("__")]:
             self.cursor.execute(f"CREATE TABLE IF NOT EXISTS {getattr(tables, table)}")
 
         self.conn.commit()
@@ -30,14 +30,19 @@ class DataBase(object):
         """
         return all registred assemblies
         """
-        return [val[0] for val in self.cursor.execute(f"SELECT Assembly FROM Assembly").fetchall()]
+        return [
+            val[0]
+            for val in self.cursor.execute(f"SELECT Assembly FROM Assembly").fetchall()
+        ]
 
     def add_assembly(self, assembly_file, assembly=None, species=None):
         """
 
         """
         # set defaults if none provided
-        assembly = assembly if assembly else os.path.basename(assembly_file).split('.')[0]
+        assembly = (
+            assembly if assembly else os.path.basename(assembly_file).split(".")[0]
+        )
         species = species if species else assembly
 
         # TODO: what should default behaviour be (probably overwrite)?
@@ -45,24 +50,30 @@ class DataBase(object):
             return
 
         # Make sure the assembly hasn't been added yet
-        assert assembly not in self.assemblies, f"Assembly '{assembly}' has already been added " \
-                                                f"to the database!"
+        assert assembly not in self.assemblies, (
+            f"Assembly '{assembly}' has already been added " f"to the database!"
+        )
 
-        self.cursor.execute(f"INSERT INTO Assembly (Assembly, Species, Abspath) "
-                            f"VALUES ('{assembly}', '{species}', '{assembly_file}')")
+        self.cursor.execute(
+            f"INSERT INTO Assembly (Assembly, Species, Abspath) "
+            f"VALUES ('{assembly}', '{species}', '{assembly_file}')"
+        )
 
         # TODO: walrus operator in python3.8
         assembly_id = self.cursor.execute(
-            f"SELECT AssemblyId FROM Assembly WHERE Assembly='{assembly}'").fetchone()
+            f"SELECT AssemblyId FROM Assembly WHERE Assembly='{assembly}'"
+        ).fetchone()
         assembly_id = assembly_id[0] if assembly_id else assembly_id
 
         # now load the chromosome sizes
         fasta = pyfaidx.Fasta(assembly_file)
         self.open_files[assembly_file] = fasta
         for sequence_name, sequence in fasta.items():
-            self.cursor.execute(f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome, Sequence) "
-                                f"    VALUES('{assembly_id}', '{len(sequence)}', "
-                                f"           '{sequence_name}', '{sequence}')")
+            self.cursor.execute(
+                f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome, Sequence) "
+                f"    VALUES('{assembly_id}', '{len(sequence)}', "
+                f"           '{sequence_name}', '{sequence}')"
+            )
 
         self.conn.commit()
 
@@ -72,34 +83,50 @@ class DataBase(object):
         """
         # check for supported filetype
         *_, extension = os.path.splitext(data_file)
-        assert extension in ['.narrowPeak'], f"The file extension you choose is not supported, TODO"
+        assert extension in [
+            ".narrowPeak"
+        ], f"The file extension you choose is not supported, TODO"
 
         # check if species it belongs to has already been added to the database
+        # TODO: walrus operator in python3.8
         assembly_id = self.cursor.execute(
-            f"SELECT AssemblyId FROM Assembly WHERE Assembly='{assembly}'").fetchone()
+            f"SELECT AssemblyId FROM Assembly WHERE Assembly='{assembly}'"
+        ).fetchone()
         assembly_id = assembly_id[0] if assembly_id else assembly_id
-        assert assembly_id, f"Assembly '{assembly}' has not been added to the database yet."
+        assert (
+            assembly_id
+        ), f"Assembly '{assembly}' has not been added to the database yet."
 
         # check if the condition does not already exist for this species
-        self.cursor.execute(f"SELECT Condition FROM Condition "
-                            f"WHERE  AssemblyId='{assembly_id}' "
-                            f"AND    Condition='{condition}'").fetchone()
+        self.cursor.execute(
+            f"SELECT Condition FROM Condition "
+            f"WHERE  AssemblyId='{assembly_id}' "
+            f"AND    Condition='{condition}'"
+        ).fetchone()
         # TODO: what should default behaviour be (probably overwrite)?
         if self.cursor.fetchone() is not None:
             return
-        assert not self.cursor.fetchone(), f"Condition '{condition}' has already been added to " \
-                                           f"the database for assembly '{assembly}'."
+        assert not self.cursor.fetchone(), (
+            f"Condition '{condition}' has already been added to "
+            f"the database for assembly '{assembly}'."
+        )
 
         # add the condition
-        self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}', '{assembly_id}')")
+        self.cursor.execute(
+            f"INSERT INTO Condition VALUES(NULL, '{condition}', '{assembly_id}')"
+        )
 
+        # TODO: walrus operator in python3.8
         condition_id = self.cursor.execute(
-            f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'").fetchone()
+            f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
+        ).fetchone()
         condition_id = condition_id[0] if condition_id else condition_id
         bed = pybedtools.BedTool(data_file)
         for region in bed:
+            # TODO: walrus operator in python3.8
             chromosome_id = self.cursor.execute(
-                f"SELECT ChromosomeId FROM Chromosome WHERE Chromosome='{region.chrom}'").fetchone()
+                f"SELECT ChromosomeId FROM Chromosome WHERE Chromosome='{region.chrom}'"
+            ).fetchone()
             chromosome_id = chromosome_id[0] if chromosome_id else chromosome_id
 
             # chromosome_id = self.get_id('Chromosome', 'Chromosome', region.chrom)
@@ -108,8 +135,12 @@ class DataBase(object):
             else:
                 assert len(region.fields) == 10, "TODO error message"
                 region.fields[-1] = int(region.fields[1]) + int(region.fields[-1])
-                self.cursor.execute(f"""INSERT INTO Bed """
-                                    f"""  VALUES(NULL, '{assembly_id}', '{condition_id}', """
-                                    f"""  '{chromosome_id}', '{"', '".join(region.fields[1:])}')""")
+                self.cursor.execute(
+                    f"""INSERT INTO Bed """
+                    f"""  VALUES(NULL, '{assembly_id}', '{condition_id}', """
+                    f"""  '{chromosome_id}', '{"', '".join(region.fields[1:])}')"""
+                )
 
         self.conn.commit()
+
+    # def get
