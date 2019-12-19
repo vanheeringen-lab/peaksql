@@ -2,7 +2,7 @@
 Collection of all the tables used by PeakSQL.
 """
 # Species table
-spe = (
+SPE = (
     "Assembly ("
     "    AssemblyId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    Assembly TEXT NOT NULL,"
@@ -12,7 +12,7 @@ spe = (
 )
 
 # Chromosome table
-chr = (
+CHR = (
     "Chromosome ("
     "    ChromosomeId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    Chromosome TEXT,"
@@ -24,7 +24,7 @@ chr = (
 )
 
 # Condition table
-con = (
+CON = (
     "Condition ("
     "    ConditionId INTEGER PRIMARY KEY AUTOINCREMENT, "
     "    Condition TEXT,"
@@ -35,11 +35,11 @@ con = (
 
 # Bed table
 # fmt: off
-bed = (
-    "Bed (" 
-    "    BedId INTEGER PRIMARY KEY AUTOINCREMENT, " 
-    "    AssemblyId NOT NULL," 
-    "    ConditionId NOT NULL," 
+BED = (
+    "Bed ("
+    "    BedId INTEGER PRIMARY KEY AUTOINCREMENT, "
+    "    AssemblyId NOT NULL,"
+    "    ConditionId NOT NULL,"
     "    ChromosomeId NOT NULL,"    # 1.  chrom (chrom ID not name) (REQUIRED)
     "    ChromStart INT NOT NULL,"  # 2.  chromStart                (REQUIRED)
     "    ChromStop INT NOT NULL,"   # 3.  chromEnd                  (REQUIRED)
@@ -50,9 +50,9 @@ bed = (
     "    PValue FLOAT,"             # 8.  pValue
     "    QValue FLOAT,"             # 9.  qValue
     "    Peak INT,"                 # 10. peak (chromStart + Peak)
-    "    FOREIGN KEY(AssemblyId)   REFERENCES Assembly(AssemblyId)," 
-    "    FOREIGN KEY(ChromosomeId) REFERENCES Chromosome(ChromosomeId)," 
-    "    FOREIGN KEY(ConditionId)  REFERENCES Condition(ConditionId)" 
+    "    FOREIGN KEY(AssemblyId)   REFERENCES Assembly(AssemblyId),"
+    "    FOREIGN KEY(ChromosomeId) REFERENCES Chromosome(ChromosomeId),"
+    "    FOREIGN KEY(ConditionId)  REFERENCES Condition(ConditionId)"
     ")"
 )
 # fmt: on

@@ -2,15 +2,18 @@
 
 """
 import sqlite3
-
-import PeakSQL.tables as tables
 import os
 
 import pybedtools
 import pyfaidx
 
+import peaksql.tables as tables
 
-class DataBase(object):
+
+class DataBase:
+    """
+
+    """
     def __init__(self, db="PeakSQL.sqlite"):
         self.db = db
 
