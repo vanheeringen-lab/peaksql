@@ -12,19 +12,12 @@ data = {'danRer11': ['48h', '8somites', '80%epiboly', 'dome', 'shield'],
 data = {'danRer11': ['48h', '8somites'],
         'mm10':     ['early_2cell', '2cell']}
 
-# for assembly, stages in data.items():
-#     # if assembly not in db.assemblies:
-#     db.add_assembly(f'/vol/genomes/{assembly}/{assembly}.fa', assembly=assembly)
+for assembly, stages in data.items():
+    # if assembly not in db.assemblies:
+    db.add_assembly(f'/vol/genomes/{assembly}/{assembly}.fa', assembly=assembly)
 
-    # for stage in stages:
-    #     db.add_data(f'/vol/atac-seq/macs2/{assembly}-{stage}_peaks.narrowPeak', assembly, stage)
+    for stage in stages:
+        db.add_data(f'/vol/atac-seq/macs2/{assembly}-{stage}_peaks.narrowPeak', assembly, stage)
 
-import time
-import numpy as np
 
-now = time.time()
-for i in range(10000):
-    low, high = np.random.randint(50), np.random.randint(100, 200)
-    db.cursor.execute(f"SELECT substr(sequence, {low}, {high}) FROM Chromosome where ChromosomeId=3")
-    print(db.cursor.fetchone())
-print(time.time() - now)
+db.
