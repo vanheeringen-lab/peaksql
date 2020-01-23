@@ -14,6 +14,7 @@ class DataBase:
     """
 
     """
+
     def __init__(self, db="PeakSQL.sqlite"):
         self.db = db
 
@@ -27,6 +28,13 @@ class DataBase:
             self.cursor.execute(f"CREATE TABLE IF NOT EXISTS {getattr(tables, table)}")
 
         self.conn.commit()
+
+        # if we are loading pre-existing database
+        self.cursor.execute("SELECT Assembly, AbsPath FROM Assembly")
+        self.fastas = {
+            assembly: pyfaidx.Fasta(abspath)
+            for assembly, abspath in self.cursor.fetchall()
+        }
 
     @property
     def assemblies(self):
@@ -53,9 +61,9 @@ class DataBase:
             return
 
         # Make sure the assembly hasn't been added yet
-        assert assembly not in self.assemblies, (
-            f"Assembly '{assembly}' has already been added " f"to the database!"
-        )
+        assert (
+            assembly not in self.assemblies
+        ), f"Assembly '{assembly}' has already been added to the database!"
 
         self.cursor.execute(
             f"INSERT INTO Assembly (Assembly, Species, Abspath) "
@@ -65,17 +73,15 @@ class DataBase:
         # TODO: walrus operator in python3.8
         assembly_id = self.cursor.execute(
             f"SELECT AssemblyId FROM Assembly WHERE Assembly='{assembly}'"
-        ).fetchone()
-        assembly_id = assembly_id[0] if assembly_id else assembly_id
+        ).fetchone()[0]
 
         # now load the chromosome sizes
         fasta = pyfaidx.Fasta(assembly_file)
         self.open_files[assembly_file] = fasta
         for sequence_name, sequence in fasta.items():
             self.cursor.execute(
-                f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome, Sequence) "
-                f"    VALUES('{assembly_id}', '{len(sequence)}', "
-                f"           '{sequence_name}', '{sequence}')"
+                f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome) "
+                f"    VALUES('{assembly_id}', '{len(sequence)}', '{sequence_name}')"
             )
 
         self.conn.commit()
@@ -145,5 +151,3 @@ class DataBase:
                 )
 
         self.conn.commit()
-
-    # def get

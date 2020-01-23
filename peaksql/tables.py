@@ -1,8 +1,8 @@
 """
 Collection of all the tables used by PeakSQL.
 """
-# Species table
-SPE = (
+# Assembly table
+ASS = (
     "Assembly ("
     "    AssemblyId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    Assembly TEXT NOT NULL,"
@@ -17,7 +17,6 @@ CHR = (
     "    ChromosomeId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    Chromosome TEXT,"
     "    Size INT NOT NULL,"
-    "    Sequence TEXT NOT NULL,"
     "    AssemblyId NOT NULL,"
     "    FOREIGN KEY(AssemblyId) REFERENCES Assembly(AssemblyId)"
     ")"

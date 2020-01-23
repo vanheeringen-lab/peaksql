@@ -1,0 +1,9 @@
+name: PeakSQL
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - pyfaidx
+  - pybedtools
+  - numba

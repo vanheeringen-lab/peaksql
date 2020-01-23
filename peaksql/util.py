@@ -1,5 +1,5 @@
 import numba
-import numpy
+import numpy as np
 
 
 @numba.jit(nopython=True)
