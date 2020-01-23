@@ -2,6 +2,9 @@
 # answer: probably yes, TODO
 import numpy as np
 from multiprocessing import Lock
+import multiprocessing
+
+import pyfaidx
 
 from .util import sequence_to_onehot
 
@@ -17,6 +20,7 @@ class NarrowPeakDataSet:
         self.size = size
         self.stride = stride
         self.database = database
+        self.fastas = {}
 
         database.cursor.execute(query)
         self.fetchall = database.cursor.fetchall()
@@ -53,12 +57,27 @@ class NarrowPeakDataSet:
         """
 
         """
+        process = self.get_process()
         for i in range(1, len(self.lens)):
             if self.lens[i - 1] <= index < self.lens[i]:
                 pos = (index - self.lens[i - 1]) * self.stride
                 assembly, chrom = self.order[i]
                 chromstart, chromstop = pos, pos + self.size
-                with self.locks[assembly]:
-                    seq = self.database.fastas[assembly][chrom][chromstart:chromstop]
-                return sequence_to_onehot(seq)
+
+                seq = self.fastas[process][assembly][chrom][chromstart:chromstop]
+                return sequence_to_onehot(seq), np.any(self.peaks[assembly][chrom][chromstart:chromstop])
         assert False
+
+    def get_process(self):
+        """
+        PyFaidx is not multiprocessing safe when reading the sequence. Therefore we need to initiate
+        a Fasta instance for each process for each assembly.
+        """
+        process = multiprocessing.current_process().name
+        if process not in self.fastas:
+            self.database.cursor.execute("SELECT Assembly, AbsPath FROM Assembly")
+            self.fastas[process] = {
+                assembly: pyfaidx.Fasta(abspath)
+                for assembly, abspath in self.database.cursor.fetchall()
+            }
+        return process
