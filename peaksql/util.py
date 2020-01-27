@@ -27,4 +27,39 @@ def _sequence_to_onehot(sequence):
 
 
 def sequence_to_onehot(sequence):
-    return _sequence_to_onehot(np.fromiter(str(sequence).upper(), (np.unicode, 1)))
+    """
+    Convert a sequence of length n to one-hot encoding of shape (4 x n).
+    """
+    return _sequence_to_onehot(np.fromiter(str(sequence).upper(), (np.unicode, 1))).T
+
+
+@numba.jit(nopython=True)
+def _binary_search(index, lens):
+    """
+    Does a binary search to not find the value in a list, but the index where the value is in
+    between two values.
+    """
+    left, right = 0, len(lens)
+
+    while left <= right:
+        mid = (left + right) // 2
+
+        if lens[mid - 1] > index:
+            right = mid
+
+        elif lens[mid] <= index:
+            left = mid
+
+        else:
+            assert lens[mid - 1] <= index < lens[mid]
+            return mid
+
+    assert False
+
+
+@numba.jit(nopython=True)
+def jit_any(arr):
+    """
+    Jit-compiled numpy.any function.
+    """
+    return np.any(arr)
