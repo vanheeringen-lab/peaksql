@@ -3,6 +3,7 @@
 """
 import sqlite3
 import os
+from functools import lru_cache
 
 import pybedtools
 import pyfaidx
@@ -20,8 +21,6 @@ class DataBase:
 
         self.conn = sqlite3.connect(db)
         self.cursor = self.conn.cursor()
-
-        self.open_files = {}
 
         # register all the tables (Assembly, Chromosome, Condition, Peak)
         for table in [table for table in dir(tables) if not table.startswith("__")]:
@@ -77,7 +76,6 @@ class DataBase:
 
         # now load the chromosome sizes
         fasta = pyfaidx.Fasta(assembly_file)
-        self.open_files[assembly_file] = fasta
         for sequence_name, sequence in fasta.items():
             self.cursor.execute(
                 f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome) "
@@ -131,25 +129,29 @@ class DataBase:
         ).fetchone()
         condition_id = condition_id[0] if condition_id else condition_id
         bed = pybedtools.BedTool(data_file)
+        lines = []
         for region in bed:
-            # TODO: walrus operator in python3.8
-            chromosome_id = self.cursor.execute(
-                f"SELECT ChromosomeId FROM Chromosome "
-                f"    WHERE Chromosome='{region.chrom}' "
-                f"    AND AssemblyId='{assembly_id}'"
-            ).fetchone()
-            chromosome_id = chromosome_id[0] if chromosome_id else chromosome_id
+            chromosome_id = self._get_chrom_id(assembly_id, region.chrom)
 
-            # chromosome_id = self.get_id('Chromosome', 'Chromosome', region.chrom)
             if len(region.fields) == 3:
                 raise NotImplementedError
             else:
                 assert len(region.fields) == 10, "TODO error message"
                 region.fields[-1] = int(region.fields[1]) + int(region.fields[-1])
-                self.cursor.execute(
-                    f"""INSERT INTO Bed """
-                    f"""  VALUES(NULL, '{assembly_id}', '{condition_id}', """
-                    f"""  '{chromosome_id}', '{"', '".join(region.fields[1:])}')"""
-                )
+
+                lines.append((assembly_id, condition_id, chromosome_id, *region.fields[1:]))
+
+        self.cursor.executemany(
+            f"""INSERT INTO Bed """
+            f"""  VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", lines
+        )
 
         self.conn.commit()
+
+    @lru_cache()
+    def _get_chrom_id(self, assembly_id, chrom_name):
+        return self.cursor.execute(
+            f"SELECT ChromosomeId FROM Chromosome "
+            f"    WHERE Chromosome='{chrom_name}' "
+            f"    AND AssemblyId='{assembly_id}'"
+        ).fetchone()[0]
