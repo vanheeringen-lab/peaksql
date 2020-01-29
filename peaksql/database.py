@@ -134,7 +134,9 @@ class DataBase:
         for region in bed:
             # TODO: walrus operator in python3.8
             chromosome_id = self.cursor.execute(
-                f"SELECT ChromosomeId FROM Chromosome WHERE Chromosome='{region.chrom}'"
+                f"SELECT ChromosomeId FROM Chromosome "
+                f"    WHERE Chromosome='{region.chrom}' "
+                f"    AND AssemblyId='{assembly_id}'"
             ).fetchone()
             chromosome_id = chromosome_id[0] if chromosome_id else chromosome_id
 
