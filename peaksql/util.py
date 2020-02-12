@@ -1,20 +1,58 @@
+# TODO: random seed + tests
 import numba
 import numpy as np
 
 
 @numba.jit(nopython=True)
 def nuc_to_onehot(nuc):
+    """
+    Convert a nucleotide to a one hot encoded boolean array, where the indexes respectively
+    correspond to A, C, G, T.
+
+    Accepts all IUPAC nucleotide codes, and picks a random option from the possible nucleotides.
+    """
+    # first try single-nucleotide codes
     if nuc == 'A':
-        return [1.00, 0.00, 0.00, 0.00]
+        return np.array([1, 0, 0, 0], dtype=numba.boolean)
     if nuc == 'C':
-        return [0.00, 1.00, 0.00, 0.00]
+        return np.array([0, 1, 0, 0], dtype=numba.boolean)
     if nuc == 'G':
-        return [0.00, 0.00, 1.00, 0.00]
+        return np.array([0, 0, 1, 0], dtype=numba.boolean)
     if nuc == 'T':
-        return [0.00, 0.00, 0.00, 1.00]
+        return np.array([0, 0, 0, 1], dtype=numba.boolean)
+
+    # if that doesn't work try multiple-nucleotide codes
+    # first set potential indexes
     if nuc == 'N':
-        return [0.25, 0.25, 0.25, 0.25]
-    raise ValueError
+        idx = np.array([0, 1, 2, 3])
+    elif nuc == 'R':
+        idx = np.array([0, 2])
+    elif nuc == 'Y':
+        idx = np.array([1, 3])
+    elif nuc == 'S':
+        idx = np.array([1, 2])
+    elif nuc == 'W':
+        idx = np.array([0, 3])
+    elif nuc == 'K':
+        idx = np.array([2, 3])
+    elif nuc == 'M':
+        idx = np.array([0, 1])
+    elif nuc == 'B':
+        idx = np.array([1, 2, 3])
+    elif nuc == 'D':
+        idx = np.array([0, 2, 3])
+    elif nuc == 'H':
+        idx = np.array([0, 1, 3])
+    elif nuc == 'V':
+        idx = np.array([0, 1, 2])
+    else:
+        raise ValueError("Only IUPAC nucleotide codes are accepted.")
+
+    # now make an empty encoding, and set a random index to True
+    onehot = np.array([0, 0, 0, 0], dtype=numba.boolean)
+    onehot[np.random.choice(idx)] = 1
+
+    return onehot
 
 
 @numba.jit(nopython=True)
@@ -63,12 +101,3 @@ def at_least(arr, fraction):
     Calculate
     """
     return np.sum(arr) >= len(arr) * fraction
-
-
-# @numba.jit(nopython=True)
-# def get_label_count(chromosome_peaks, positions):
-#     peaks = 0
-#     for i in range(positions.shape[0]):
-#         chromstart, chromend = positions[i]
-#         peaks += jit_any(chromosome_peaks[chromstart:chromend])
-#     return peaks
