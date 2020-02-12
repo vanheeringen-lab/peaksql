@@ -121,7 +121,7 @@ class DataSet(ABC):
 
     def _index_to_site(self, index: int) -> (str, str, int, int):
         """
-        Convert the index of self.__getitem__ to a tuple of (assembly, chrom, chromstart, chromstop)
+        Convert the index of self.__getitem__ to a tuple of (assembly, chrom, chromstart, chromend)
 
         Uses binary search for fast retrieval.
         """
@@ -129,13 +129,13 @@ class DataSet(ABC):
 
         assembly, chrom = self.chromosomes[index_bs]
         chromstart = self.positions[index_bs][index - self.cumsum[index_bs - 1]]
-        chromstop = chromstart + self.seq_length
+        chromend = chromstart + self.seq_length
 
-        return assembly, chrom, chromstart, chromstop
+        return assembly, chrom, chromstart, chromend
 
 
 class BedDataSet(DataSet):
-    SELECT = "SELECT Assembly, Chromosome, ChromStart, ChromStop FROM Bed " \
+    SELECT = "SELECT Assembly, Chromosome, ChromStart, ChromEnd FROM Bed " \
              "INNER JOIN Chromosome Chr ON Bed.ChromosomeId = Chr.ChromosomeId " \
              "INNER JOIN Condition Con  ON Bed.ConditionId  = Con.ConditionId " \
              "INNER JOIN Assembly Ass   ON Chr.AssemblyId   = Ass.AssemblyId "
@@ -151,14 +151,14 @@ class BedDataSet(DataSet):
         Return the sequence in one-hot encoding and the label of the corresponding index.
         """
         process = self._get_process()
-        assembly, chrom, chromstart, chromstop = self._index_to_site(index)
+        assembly, chrom, chromstart, chromend = self._index_to_site(index)
 
         # get the sequence
-        seq = self.fastas[process][assembly][chrom][chromstart:chromstop]
+        seq = self.fastas[process][assembly][chrom][chromstart:chromend]
         seq = sequence_to_onehot(seq)
 
         # get the label
-        label = at_least(self.peaks[assembly][chrom][chromstart:chromstop], self.frac_region)
+        label = at_least(self.peaks[assembly][chrom][chromstart:chromend], self.frac_region)
 
         return seq, label
 
@@ -176,7 +176,7 @@ class BedDataSet(DataSet):
         }
         """
         peaks = dict()
-        for assembly, chrom, chromstart, chromstop in self.fetchall:
+        for assembly, chrom, chromstart, chromend in self.fetchall:
             if assembly not in peaks:
                 peaks[assembly] = dict()
             if chrom not in peaks[assembly]:
@@ -184,7 +184,7 @@ class BedDataSet(DataSet):
                     len(self.database.fastas[assembly][chrom]),
                     dtype=bool
                 )
-            peaks[assembly][chrom][chromstart:chromstop] = True
+            peaks[assembly][chrom][chromstart:chromend] = True
 
         return peaks
 

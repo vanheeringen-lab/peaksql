@@ -41,7 +41,7 @@ BED = (
     "    ConditionId NOT NULL,"
     "    ChromosomeId NOT NULL,"    # 1.  chrom (chrom ID not name) (REQUIRED)
     "    ChromStart INT NOT NULL,"  # 2.  chromStart                (REQUIRED)
-    "    ChromStop INT NOT NULL,"   # 3.  chromEnd                  (REQUIRED)
+    "    ChromEnd INT NOT NULL,"    # 3.  chromEnd                  (REQUIRED)
     "    Name TEXT,"                # 4.  name
     "    Score INT,"                # 5.  score
     "    Strand TEXT,"              # 6.  strand
