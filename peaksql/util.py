@@ -34,7 +34,7 @@ def sequence_to_onehot(sequence):
 
 
 @numba.jit(nopython=True)
-def _binary_search(index, lens):
+def binary_search(index, lens):
     """
     Does a binary search to not find the value in a list, but the index where the value is in
     between two values.
@@ -58,8 +58,17 @@ def _binary_search(index, lens):
 
 
 @numba.jit(nopython=True)
-def jit_any(arr):
+def at_least(arr, fraction):
     """
-    Jit-compiled numpy.any function.
+    Calculate
     """
-    return np.any(arr)
+    return np.sum(arr) >= len(arr) * fraction
+
+
+# @numba.jit(nopython=True)
+# def get_label_count(chromosome_peaks, positions):
+#     peaks = 0
+#     for i in range(positions.shape[0]):
+#         chromstart, chromend = positions[i]
+#         peaks += jit_any(chromosome_peaks[chromstart:chromend])
+#     return peaks
