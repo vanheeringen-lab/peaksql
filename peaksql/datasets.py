@@ -6,7 +6,7 @@ import pyfaidx
 import sqlite3
 
 from database import DataBase
-from util import sequence_to_onehot, _binary_search, jit_any, get_label_count
+from util import sequence_to_onehot, _binary_search, at_least, get_label_count
 
 
 class DataSet(ABC):
@@ -140,8 +140,10 @@ class BedDataSet(DataSet):
              "INNER JOIN Condition Con  ON Bed.ConditionId  = Con.ConditionId " \
              "INNER JOIN Assembly Ass   ON Chr.AssemblyId   = Ass.AssemblyId "
 
-    def __init__(self, database: str, query: str = "", seq_length: int = 200, **kwargs: int):
+    def __init__(self, database: str, query: str = "", seq_length: int = 200,
+                 frac_region: float = 0.5, **kwargs: int):
         DataSet.__init__(self, database, query, seq_length, **kwargs)
+        self.frac_region = 0.5
         self.peaks = self.get_peak_locations()
 
     def __getitem__(self, index: int) -> (np.array, int):
@@ -156,13 +158,14 @@ class BedDataSet(DataSet):
         seq = sequence_to_onehot(seq)
 
         # get the label
-        label = jit_any(self.peaks[assembly][chrom][chromstart:chromstop])
+        label = at_least(self.peaks[assembly][chrom][chromstart:chromstop], self.frac_region)
 
         return seq, label
 
     def get_peak_locations(self) -> dict:
         """
-        Map of all assemblies and genomic coordinates and whether or not it falls within a peak.
+        Map of all assemblies and genomic coordinates and whether or not it falls within a peak
+        region.
 
         :return
         {
@@ -194,17 +197,47 @@ class BedDataSet(DataSet):
         peaks = 0
         for i, (assembly, chrom) in enumerate(self.chromosomes[1:]):
             for chromstart in self.positions[i + 1]:
-                peaks += jit_any(self.peaks[assembly][chrom][chromstart:chromstart+self.seq_length])
+                peaks += at_least(self.peaks[assembly][chrom][chromstart:chromstart+self.seq_length]
+                                  , self.frac_region)
 
         return len(self) - peaks, peaks
 
 
-class NarrowPeakDataSet(DataSet, BedDataSet):
+class NarrowPeakDataSet(BedDataSet, DataSet):
     SELECT = "SELECT Assembly, Chromosome, ChromStart, Peak FROM Bed " \
              "INNER JOIN Chromosome Chr ON Bed.ChromosomeId = Chr.ChromosomeId " \
              "INNER JOIN Condition Con  ON Bed.ConditionId  = Con.ConditionId " \
              "INNER JOIN Assembly Ass   ON Chr.AssemblyId   = Ass.AssemblyId "
 
+    def __init__(self, database: str, query: str = "", seq_length: int = 200, **kwargs: int):
+        raise NotImplementedError
+        DataSet.__init__(self, database, query, seq_length, **kwargs)
+        self.summits = self.get_summit_locations()
+
+    def get_summit_locations(self) -> dict:
+        """
+        Map of all assemblies and genomic coordinates and whether or not it contains a summit.
+
+        :return
+        {
+        assembly1:
+            {chrom1: np.array([False, False, True, ..., True], dtype=bool),
+             chrom2: np.array([False, True, False, ..., True], dtype=bool),
+             ...
+        }
+        """
+        summits = dict()
+        for assembly, chrom, chromstart, peak in self.fetchall:
+            if assembly not in summits:
+                summits[assembly] = dict()
+            if chrom not in summits[assembly]:
+                summits[assembly][chrom] = np.zeros(
+                    len(self.database.fastas[assembly][chrom]),
+                    dtype=bool
+                )
+            summits[assembly][chrom][chromstart + peak] = True
+
+        return summits
 
 
 class BamDataSet(DataSet):
@@ -216,8 +249,9 @@ class WigDataSet(DataSet):
     def __init__(self):
         raise NotImplementedError
 
+
 import time
 now = time.time()
-dataset = BedDataSet("/vol/PeakSQL/peakSQL.sqlite", stride=200)
+dataset = BedDataSet("/vol/PeakSQL/peakSQL.sqlite", stride=2000)
 print(dataset.get_label_occurence())
 print(time.time() - now)
