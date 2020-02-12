@@ -28,7 +28,7 @@ CON = (
     "    ConditionId INTEGER PRIMARY KEY AUTOINCREMENT, "
     "    Condition TEXT,"
     "    AssemblyId NOT NULL,"
-    "    FOREIGN KEY(AssemblyId) REFERENCES Assebly(AssemblyId)"
+    "    FOREIGN KEY(AssemblyId) REFERENCES Assembly(AssemblyId)"
     ")"
 )
 
