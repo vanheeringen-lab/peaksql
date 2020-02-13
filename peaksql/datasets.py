@@ -106,8 +106,8 @@ class DataSet(ABC):
         counts = [0]
         startpos = [np.array([])]
         for assembly, chrom in combis[1:]:
-            counts.append(len(self.database.fastas[assembly][chrom]) // stride)
-            startpos.append(np.arange(0, len(self.database.fastas[assembly][chrom]) - seq_length, seq_length))
+            startpos.append(np.arange(0, len(self.database.fastas[assembly][chrom]) - seq_length, stride))
+            counts.append(len(startpos[-1]))
 
         cumsum = np.cumsum(counts)
 
