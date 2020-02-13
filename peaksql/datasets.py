@@ -21,7 +21,8 @@ class DataSet(ABC):
         self.database = DataBase(database)
 
         # sql lookup
-        query = self.SELECT + self.FROM + where
+        self.WHERE = where
+        query = self.SELECT + self.FROM + self.WHERE
         self.database.cursor.execute(query)
         self.fetchall = self.database.cursor.fetchall()
 
@@ -125,16 +126,20 @@ class DataSet(ABC):
         """
         combis = [(None, None)] + list({(assembly, chrom) for assembly, chrom, *_ in self.fetchall})
 
+        # distribute the positions over the chromosomes
         sizes = []
         for assembly, chrom in combis[1:]:
             sizes.append(len(self.database.fastas[assembly][chrom]))
 
         distribution = np.random.choice(range(len(sizes)), size=nr_rand_pos, p=np.array(sizes) / np.sum(sizes))
+        vals, counts = np.unique(distribution, return_counts=True)
 
+        # then distribute inside a chromosome
         counts = [0]
         startpos = [np.array([])]
         for i, (assembly, chrom) in enumerate(combis[1:]):
-            count = np.sum(distribution == i)
+            where = np.where(vals == i)
+            count = where[0][0] if len(where[0]) > 0 else 0
             counts.append(count)
             startpos.append(np.random.randint(0, len(self.database.fastas[assembly][chrom]) - seq_length, size=count))
 
