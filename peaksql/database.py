@@ -35,6 +35,21 @@ class DataBase:
             for assembly, abspath in self.cursor.fetchall()
         }
 
+    @lru_cache()
+    def get_assembly_id(self, assembly_name):
+        return self.cursor.execute(
+            f"SELECT AssemblyId FROM Assembly "
+            f"    WHERE Assembly='{assembly_name}' "
+        ).fetchone()[0]
+
+    @lru_cache()
+    def get_chrom_id(self, assembly_id, chrom_name):
+        return self.cursor.execute(
+            f"SELECT ChromosomeId FROM Chromosome "
+            f"    WHERE Chromosome='{chrom_name}' "
+            f"    AND AssemblyId='{assembly_id}'"
+        ).fetchone()[0]
+
     @property
     def assemblies(self):
         """
@@ -131,7 +146,7 @@ class DataBase:
         bed = pybedtools.BedTool(data_file)
         lines = []
         for region in bed:
-            chromosome_id = self._get_chrom_id(assembly_id, region.chrom)
+            chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
 
             if len(region.fields) == 3:
                 raise NotImplementedError
@@ -148,10 +163,6 @@ class DataBase:
 
         self.conn.commit()
 
-    @lru_cache()
-    def _get_chrom_id(self, assembly_id, chrom_name):
-        return self.cursor.execute(
-            f"SELECT ChromosomeId FROM Chromosome "
-            f"    WHERE Chromosome='{chrom_name}' "
-            f"    AND AssemblyId='{assembly_id}'"
-        ).fetchone()[0]
+    def create_index(self):
+        self.cursor.execute("CREATE INDEX Bed_AssemblyId_ChromosomeId_Chromstart_Chromend_idx ON "
+                            "BED (AssemblyId, ChromosomeId, ChromStart, ChromEnd)")
