@@ -57,7 +57,7 @@ def nuc_to_onehot(nuc):
 
 @numba.jit(nopython=True)
 def _sequence_to_onehot(sequence):
-    onehot = np.zeros((len(sequence), 4))
+    onehot = np.zeros((len(sequence), 4), dtype=numba.boolean)
     for i, nuc in enumerate(sequence):
         onehot[i] = nuc_to_onehot(sequence[i])
 
