@@ -59,7 +59,7 @@ def nuc_to_onehot(nuc):
 def _sequence_to_onehot(sequence):
     onehot = np.zeros((len(sequence), 4), dtype=numba.boolean)
     for i, nuc in enumerate(sequence):
-        onehot[i] = nuc_to_onehot(sequence[i])
+        onehot[i] = nuc_to_onehot(nuc)
 
     return onehot
 
@@ -68,8 +68,6 @@ def sequence_to_onehot(sequence):
     """
     Convert a sequence of length n to one-hot encoding of shape (4 x n).
     """
-    print(str(sequence).upper().encode("utf-8"))
-    return _sequence_to_onehot(str(sequence).upper().encode("utf-8")).T
     return _sequence_to_onehot(np.fromiter(str(sequence).upper(), (np.unicode, 1))).T
 
 
@@ -99,11 +97,3 @@ def binary_search(index, lens):
             return mid
 
     assert False
-
-
-@numba.jit(nopython=True)
-def at_least(arr, fraction):
-    """
-    Calculate
-    """
-    return np.sum(arr) >= len(arr) * fraction
