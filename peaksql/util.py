@@ -63,7 +63,6 @@ def _sequence_to_onehot(sequence):
 
     return onehot
 
-@profile
 def sequence_to_onehot(sequence):
     """
     Convert a sequence of length n to one-hot encoding of shape (4 x n).
