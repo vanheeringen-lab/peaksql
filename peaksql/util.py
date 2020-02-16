@@ -3,7 +3,7 @@ import numba
 import numpy as np
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True)
 def nuc_to_onehot(nuc):
     """
     Convert a nucleotide to a one hot encoded boolean array, where the indexes respectively
@@ -55,7 +55,7 @@ def nuc_to_onehot(nuc):
     return onehot
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True)
 def _sequence_to_onehot(sequence):
     onehot = np.zeros((len(sequence), 4), dtype=numba.boolean)
     for i, nuc in enumerate(sequence):
@@ -63,19 +63,25 @@ def _sequence_to_onehot(sequence):
 
     return onehot
 
-
+@profile
 def sequence_to_onehot(sequence):
     """
     Convert a sequence of length n to one-hot encoding of shape (4 x n).
     """
+    print(str(sequence).upper().encode("utf-8"))
+    return _sequence_to_onehot(str(sequence).upper().encode("utf-8")).T
     return _sequence_to_onehot(np.fromiter(str(sequence).upper(), (np.unicode, 1))).T
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True)
 def binary_search(index, lens):
     """
     Does a binary search to not find the value in a list, but the index where the value is in
-    between two values.
+    between two values (returns the higher index of the two).
+
+    index: 5
+    lens: [0, 4, 6, 8, 22]
+    returns: 2
     """
     left, right = 0, len(lens)
 
