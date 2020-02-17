@@ -4,70 +4,69 @@ import numpy as np
 
 
 @numba.jit(nopython=True, cache=True)
-def nuc_to_onehot(nuc):
+def nuc_to_onehot_idx(nuc):
     """
-    Convert a nucleotide to a one hot encoded boolean array, where the indexes respectively
-    correspond to A, C, G, T.
+    Convert a nucleotide to a one hot index, where the indexes 0, 1, 2, 3 respectively correspond to
+    A, C, G, T.
 
     Accepts all IUPAC nucleotide codes, and picks a random option from the possible nucleotides.
     """
     # first try single-nucleotide codes
-    if nuc == 'A':
-        return np.array([1, 0, 0, 0], dtype=numba.boolean)
-    if nuc == 'C':
-        return np.array([0, 1, 0, 0], dtype=numba.boolean)
-    if nuc == 'G':
-        return np.array([0, 0, 1, 0], dtype=numba.boolean)
-    if nuc == 'T':
-        return np.array([0, 0, 0, 1], dtype=numba.boolean)
+    # start with A & T, since genomes generally have higher AT content than GC content
+    if nuc == 65:  # A
+        return 0
+    if nuc == 84:  # T
+        return 3
+    if nuc == 67:  # C
+        return 1
+    if nuc == 71:  # G
+        return 2
 
     # if that doesn't work try multiple-nucleotide codes
     # first set potential indexes
-    if nuc == 'N':
+    if nuc == 78:    # N
         idx = np.array([0, 1, 2, 3])
-    elif nuc == 'R':
+    elif nuc == 82:  # R
         idx = np.array([0, 2])
-    elif nuc == 'Y':
+    elif nuc == 89:  # Y
         idx = np.array([1, 3])
-    elif nuc == 'S':
+    elif nuc == 83:  # S
         idx = np.array([1, 2])
-    elif nuc == 'W':
+    elif nuc == 87:  # W
         idx = np.array([0, 3])
-    elif nuc == 'K':
+    elif nuc == 75:  # K
         idx = np.array([2, 3])
-    elif nuc == 'M':
+    elif nuc == 77:  # M
         idx = np.array([0, 1])
-    elif nuc == 'B':
+    elif nuc == 66:  # B
         idx = np.array([1, 2, 3])
-    elif nuc == 'D':
+    elif nuc == 68:  # D
         idx = np.array([0, 2, 3])
-    elif nuc == 'H':
+    elif nuc == 72:  # H
         idx = np.array([0, 1, 3])
-    elif nuc == 'V':
+    elif nuc == 86:  # V
         idx = np.array([0, 1, 2])
     else:
         raise ValueError("Only IUPAC nucleotide codes are accepted.")
 
-    # now make an empty encoding, and set a random index to True
-    onehot = np.array([0, 0, 0, 0], dtype=numba.boolean)
-    onehot[np.random.choice(idx)] = 1
-
-    return onehot
+    # now return any of the possible indexes
+    return np.random.choice(idx)
 
 
 @numba.jit(nopython=True, cache=True)
 def _sequence_to_onehot(sequence):
     onehot = np.zeros((len(sequence), 4), dtype=numba.boolean)
     for i, nuc in enumerate(sequence):
-        onehot[i] = nuc_to_onehot(nuc)
+        onehot[i, nuc_to_onehot_idx(nuc)] = True
 
     return onehot
+
 
 def sequence_to_onehot(sequence):
     """
     Convert a sequence of length n to one-hot encoding of shape (4 x n).
     """
-    return _sequence_to_onehot(np.fromiter(str(sequence).upper(), (np.unicode, 1))).T
+    return _sequence_to_onehot(str(sequence).upper().encode('utf-8')).T
 
 
 @numba.jit(nopython=True, cache=True)
