@@ -178,13 +178,17 @@ class DataBase:
         for region in bed:
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
 
-            if len(region.fields) == 3:
-                lines.append((assembly_id, condition_id, chromosome_id, *region.fields[:3], None, None, None, None, None, None))
-            else:
-                assert len(region.fields) == 10, "TODO error message"
+            if len(region.fields) == 3 and extension == '.bed':
+                lines.append((assembly_id, condition_id, chromosome_id, *region.fields[:3], None,
+                              None, None, None, None, None))
+            elif len(region.fields) == 10 and extension == '.narrowPeak':
                 region.fields[-1] = int(region.fields[1]) + int(region.fields[-1])
 
                 lines.append((assembly_id, condition_id, chromosome_id, *region.fields[1:]))
+            else:
+                fields = {'.bed': 3, '.narrowPeak': 10}
+                assert False, f"Extension {extension} should have {fields[extension]} fields, " \
+                              f"however it has {len(fields)}"
 
         self.cursor.executemany(
             f"""INSERT INTO Bed """

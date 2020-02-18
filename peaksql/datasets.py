@@ -206,4 +206,4 @@ class BedDataSet(DataSet):
 
         labels = np.any(positions, axis=1)
 
-        return labels[0]
+        return labels
