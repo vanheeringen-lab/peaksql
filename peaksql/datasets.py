@@ -2,33 +2,31 @@ import numpy as np
 import multiprocessing
 from abc import ABC, abstractmethod
 
-import pyfaidx
-import sqlite3
-
-from database import DataBase
-import util
+from .database import DataBase
+import peaksql.util as util
 
 
 class DataSet(ABC):
     """
-
+    DataSet baseclass.
     """
     def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs: int):
+        # check for valid input
         if ('stride' in kwargs) == ('nr_rand_pos' in kwargs):  # xor
-            raise ValueError("choose a stride or a number of random positions")
+            raise ValueError("choose a stride OR a number of random positions")
 
-        #
-        self.database = DataBase(database)
+        # store general stuff
+        self.database_path = database
+        self.databases = dict()
+        self.seq_length = seq_length
 
-        # sql lookup
+        # sql(ite) lookup
         self.WHERE = where
         query = self.SELECT + self.FROM + self.WHERE
         self.database.cursor.execute(query)
         self.fetchall = self.database.cursor.fetchall()
 
-        #
-        self.seq_length = seq_length
-        self.fastas = {}
+        # get the genomic positions of our indices
         if "stride" in kwargs:
             self.stride = kwargs['stride']
             self.chromosomes, self.cumsum, self.positions = \
@@ -37,6 +35,13 @@ class DataSet(ABC):
             self.nr_rand_pos = kwargs['nr_rand_pos']
             self.chromosomes, self.cumsum, self.positions = \
                 self.get_random_positions(self.seq_length, self.nr_rand_pos)
+
+        # get all the conditions in the database
+        self.all_conditions = self.database.cursor.execute(
+            "SELECT DISTINCT ConditionId FROM Condition").fetchall()
+
+        # mark fetchall for garbage collection (can be very large and we don't need it anymore)
+        del self.fetchall
 
     def __len__(self) -> int:
         """
@@ -48,33 +53,24 @@ class DataSet(ABC):
         """
         Return the sequence in one-hot encoding and the label of the corresponding index.
         """
-        process = self._get_process()
         assembly, chrom, chromstart, chromend = self._index_to_site(index)
 
         # get the sequence, label and condition
-        seq = self.get_onehot_sequence(assembly, chrom, chromstart, chromend, process)
-        label = self.get_label(assembly, chrom, chromstart, chromend, process)
-        condition = self.get_condition(assembly, chrom, chromstart, chromend, process)
+        seq = self.get_onehot_sequence(assembly, chrom, chromstart, chromend)
+        label = self.get_label(assembly, chrom, chromstart, chromend)
 
-        return seq, label, condition
+        return seq, label
 
     def _get_process(self):
         """
-        PyFaidx is not multiprocessing safe when reading from fasta index. However if we start a
-        Fasta class for each process, the file pointers don't get mangled, and we can use
-        multiprocessing. This allows us to "stream" our data parallel in e.g. a Pytorch dataloader.
+        PyFaidx is not multiprocessing safe when reading from fasta index or with sql(ite) queries.
+        However if we start a new DataBase class for each process, we automatically start new
+        sql(ite) connections and pyfaidx instances. This allows us to "stream" our data parallel in
+        e.g. a Pytorch dataloader.
         """
         process = multiprocessing.current_process().name
-        if process not in self.fastas:
-            # start a new connection
-            conn = sqlite3.connect(self.database.db)
-            cursor = conn.cursor()
-
-            cursor.execute("SELECT Assembly, AbsPath FROM Assembly")
-            self.fastas[process] = {
-                assembly: pyfaidx.Fasta(abspath)
-                for assembly, abspath in cursor.fetchall()
-            }
+        if process not in self.databases:
+            self.databases[process] = DataBase(self.database_path)
         return process
 
     def _index_to_site(self, index: int) -> (str, str, int, int):
@@ -105,13 +101,17 @@ class DataSet(ABC):
 
         counts = [0]
         startpos = [np.array([])]
+        non_empty_combis = [(None, None)]
         for assembly, chrom in combis[1:]:
-            startpos.append(np.arange(0, len(self.database.fastas[assembly][chrom]) - seq_length, stride))
-            counts.append(len(startpos[-1]))
+            positions = np.arange(0, len(self.database.fastas[assembly][chrom]) - seq_length - stride, stride)
+            if len(positions):
+                non_empty_combis.append((assembly, chrom))
+                startpos.append(positions)
+                counts.append(len(startpos[-1]))
 
         cumsum = np.cumsum(counts)
 
-        return combis, cumsum, startpos
+        return non_empty_combis, cumsum, startpos
 
     def get_random_positions(self, seq_length, nr_rand_pos):
         """
@@ -124,7 +124,11 @@ class DataSet(ABC):
         the third list contains all chromstarts of the sequences. This allows for a decently fast
         and memory-efficient lookup of genomic positions corresponding to an index.
         """
-        combis = [(None, None)] + list({(assembly, chrom) for assembly, chrom, *_ in self.fetchall})
+        # FIXME: somehow this implementation is very buggy, let's just raise error for now
+        raise NotImplementedError
+        combis = list({(assembly, chrom) for assembly, chrom, *_ in self.fetchall})
+        combis = [(None, None)] + [(assembly, chrom) for assembly, chrom in combis if
+                                   len(self.database.fastas[assembly][chrom]) > seq_length]
 
         # distribute the positions over the chromosomes
         sizes = []
@@ -135,28 +139,27 @@ class DataSet(ABC):
         vals, counts = np.unique(distribution, return_counts=True)
 
         # then distribute inside a chromosome
-        counts = [0]
+        total_counts = [0]
         startpos = [np.array([])]
+        non_empty_combis = [(None, None)]
         for i, (assembly, chrom) in enumerate(combis[1:]):
             where = np.where(vals == i)
-            count = where[0][0] if len(where[0]) > 0 else 0
-            counts.append(count)
-            startpos.append(np.random.randint(0, len(self.database.fastas[assembly][chrom]) - seq_length, size=count))
+            if len(where[0]) > 0:
+                total_counts.append(counts[where[0][0]])
+                startpos.append(np.random.randint(0, len(self.database.fastas[assembly][chrom]) - seq_length, size=counts[where[0][0]]))
+                non_empty_combis.append((assembly, chrom))
 
         cumsum = np.cumsum(counts)
 
-        return combis, cumsum, startpos
+        return non_empty_combis, cumsum, startpos
 
-    def get_onehot_sequence(self, assembly: str, chrom: str, chromstart: int, chromend: int,
-                            process=None):
+    def get_onehot_sequence(self, assembly: str, chrom: str, chromstart: int, chromend: int):
         """
         Get the one-hot encoded sequence based on the assembly, chromosome, chromstart and chromend.
         """
-        if process:
-            seq = self.fastas[process][assembly][chrom][chromstart:chromend]
-        else:
-            seq = self.database.fastas[assembly][chrom][chromstart:chromend]
+        process = self._get_process()
 
+        seq = self.databases[process].fastas[assembly][chrom][chromstart:chromend]
         seq = util.sequence_to_onehot(seq)
 
         return seq
@@ -165,123 +168,41 @@ class DataSet(ABC):
     def get_label(self):
         pass
 
-    @abstractmethod
-    def get_condition(self):
-        pass
+    @property
+    def database(self):
+        process = self._get_process()
+        return self.databases[process]
 
 
 class BedDataSet(DataSet):
+    """
+    The BedDataSet...
+    """
     SELECT = " SELECT Assembly, Chromosome, ChromStart, ChromEnd "
     FROM = " FROM Bed " \
            " INNER JOIN Chromosome Chr ON Bed.ChromosomeId = Chr.ChromosomeId " \
-           " INNER JOIN Condition Con  ON Bed.ConditionId  = Con.ConditionId " \
            " INNER JOIN Assembly Ass   ON Chr.AssemblyId   = Ass.AssemblyId "
 
-    def __init__(self, database: str, where: str = "", seq_length: int = 200,
-                 frac_region: float = 0.5, union_conditions: bool = True, **kwargs: int):
+    def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs: int):
         DataSet.__init__(self, database, where, seq_length, **kwargs)
-        self.frac_region = frac_region
-        self.peaks = self.get_peak_locations(union_conditions)
 
-    def get_condition(self):
-        return None
-
-    def get_label(self):
-        pass
-
-    def get_peak_locations(self, union) -> dict:
+    def get_label(self, assembly, chrom, chromstart, chromend):
         """
-        Map of all assemblies and genomic coordinates and whether or not it falls within a peak
-        region.
-
-        :return
-        {
-        assembly1:
-            {chrom1: np.array([False, False, True, ..., True], dtype=bool),
-             chrom2: np.array([False, True, False, ..., True], dtype=bool),
-             ...
-        }
+        Get the label that corresponds to chromstart:chromend.
         """
-        peaks = dict()
-        if union:
-            for assembly, chrom, chromstart, chromend in self.fetchall:
-                if assembly not in peaks:
-                    peaks[assembly] = dict()
-                if chrom not in peaks[assembly]:
-                    peaks[assembly][chrom] = np.zeros(
-                        len(self.database.fastas[assembly][chrom]),
-                        dtype=bool
-                    )
-                peaks[assembly][chrom][chromstart:chromend] = True
+        assemblyid = self.database.get_assembly_id(assembly)
+        chromosomeid = self.database.get_chrom_id(assemblyid, chrom)
 
-        return peaks
+        active_conds = self.database.cursor.execute(f"""
+                SELECT ConditionId, ChromStart, ChromEnd FROM Bed
+                Where ChromosomeId={chromosomeid} AND
+                ({chromstart} <= ChromEnd) AND ({chromend} >= ChromStart)
+                """).fetchall()
 
-    def get_label_occurence(self) -> (int, int):
-        """
-        Get the number of occurrences of each label.
+        positions = np.zeros((len(self.all_conditions), chromend - chromstart), dtype=bool)
+        for condition_id, start, end in active_conds:
+            positions[condition_id, start:end] = True
 
-        First returns the number of negatives (non-peak), and then the number of positives (peak).
-        """
-        peaks = 0
-        for i, (assembly, chrom) in enumerate(self.chromosomes[1:]):
-            for chromstart in self.positions[i + 1]:
-                peaks += at_least(self.peaks[assembly][chrom][chromstart:chromstart+self.seq_length]
-                                  , self.frac_region)
+        labels = np.any(positions, axis=1)
 
-        return len(self) - peaks, peaks
-
-
-# class NarrowPeakDataSet(BedDataSet, DataSet):
-#     SELECT = "SELECT Assembly, Chromosome, ChromStart, Peak FROM Bed " \
-#              "INNER JOIN Chromosome Chr ON Bed.ChromosomeId = Chr.ChromosomeId " \
-#              "INNER JOIN Condition Con  ON Bed.ConditionId  = Con.ConditionId " \
-#              "INNER JOIN Assembly Ass   ON Chr.AssemblyId   = Ass.AssemblyId "
-#
-#     def __init__(self, database: str, query: str = "", seq_length: int = 200, **kwargs: int):
-#         raise NotImplementedError
-#         DataSet.__init__(self, database, query, seq_length, **kwargs)
-#         self.summits = self.get_summit_locations()
-#
-#     def get_summit_locations(self) -> dict:
-#         """
-#         Map of all assemblies and genomic coordinates and whether or not it contains a summit.
-#
-#         :return
-#         {
-#         assembly1:
-#             {chrom1: np.array([False, False, True, ..., True], dtype=bool),
-#              chrom2: np.array([False, True, False, ..., True], dtype=bool),
-#              ...
-#         }
-#         """
-#         summits = dict()
-#         for assembly, chrom, chromstart, peak in self.fetchall:
-#             if assembly not in summits:
-#                 summits[assembly] = dict()
-#             if chrom not in summits[assembly]:
-#                 summits[assembly][chrom] = np.zeros(
-#                     len(self.database.fastas[assembly][chrom]),
-#                     dtype=bool
-#                 )
-#             summits[assembly][chrom][chromstart + peak] = True
-#
-#         return summits
-
-
-# class BamDataSet(DataSet):
-#     def __init__(self):
-#         raise NotImplementedError
-#
-#
-# class WigDataSet(DataSet):
-#     def __init__(self):
-#         raise NotImplementedError
-
-
-import time
-now = time.time()
-dataset = BedDataSet("/vol/PeakSQL/peakSQL.sqlite", where="where species='danRer11'", stride=2000)
-
-
-print(dataset.get_label_occurence())
-print(time.time() - now)
+        return labels

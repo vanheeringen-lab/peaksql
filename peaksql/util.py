@@ -79,6 +79,7 @@ def binary_search(index, lens):
     lens: [0, 4, 6, 8, 22]
     returns: 2
     """
+    # FIXME: this can hang in infinite loop, and because of numba becomes unresponsive.
     left, right = 0, len(lens)
 
     while left <= right:

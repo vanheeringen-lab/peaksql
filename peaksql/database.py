@@ -13,14 +13,17 @@ import peaksql.tables as tables
 
 class DataBase:
     """
+    The DataBase class is an easy interface to store pre-processed NGS data for Machine Learning.
 
+    It allows for ...
     """
-
-    def __init__(self, db="PeakSQL.sqlite"):
+    def __init__(self, db: str = "PeakSQL.sqlite"):
         self.db = db
 
-        self.conn = sqlite3.connect(db)
+        # connect, and set a relatively high timeout number for multiprocessing
+        self.conn = sqlite3.connect(db, timeout=30)
         self.cursor = self.conn.cursor()
+        self.cursor.execute('PRAGMA journal_mode=WAL')
 
         # register all the tables (Assembly, Chromosome, Condition, Peak)
         for table in [table for table in dir(tables) if not table.startswith("__")]:
@@ -28,7 +31,7 @@ class DataBase:
 
         self.conn.commit()
 
-        # if we are loading pre-existing database
+        # if we are loading a pre-existing database connect to all the assemblies
         self.cursor.execute("SELECT Assembly, AbsPath FROM Assembly")
         self.fastas = {
             assembly: pyfaidx.Fasta(abspath)
@@ -37,17 +40,25 @@ class DataBase:
 
     @lru_cache()
     def get_assembly_id(self, assembly_name):
+        """
+        Quickly get the AssemblyId based on Assembly (name).
+        """
         return self.cursor.execute(
             f"SELECT AssemblyId FROM Assembly "
             f"    WHERE Assembly='{assembly_name}' "
+            f"LIMIT 1"
         ).fetchone()[0]
 
-    @lru_cache()
+    @lru_cache(maxsize=2**16)
     def get_chrom_id(self, assembly_id, chrom_name):
+        """
+        Quickly get the ChromosomeId based on assemblyId and Chromosome (name).
+        """
         return self.cursor.execute(
             f"SELECT ChromosomeId FROM Chromosome "
             f"    WHERE Chromosome='{chrom_name}' "
             f"    AND AssemblyId='{assembly_id}'"
+            f"LIMIT 1"
         ).fetchone()[0]
 
     @property
@@ -60,90 +71,93 @@ class DataBase:
             for val in self.cursor.execute(f"SELECT Assembly FROM Assembly").fetchall()
         ]
 
-    def add_assembly(self, assembly_file, assembly=None, species=None):
+    def add_assembly(self, assembly_path: str, assembly: str = None, species: str = None):
         """
+        Add an assembly (genome) to the database. Sequences from the assembly are retrieved with
+        PyFaidx, and the database assumes the assembly does not change location during during its
+        lifetime.
 
+        :param assembly_path: The path to the assembly file.
+        :param assembly: The name of the assembly (optional: default is the name of the file).
+        :param species: The name of the species the assembly belongs to (optional: default is the
+        assembly name)
         """
         # set defaults if none provided
         assembly = (
-            assembly if assembly else os.path.basename(assembly_file).split(".")[0]
+            assembly if assembly else os.path.basename(assembly_path).split(".")[0]
         )
         species = species if species else assembly
 
         # TODO: what should default behaviour be (probably overwrite)?
-        if assembly in self.assemblies:
-            return
-
-        # Make sure the assembly hasn't been added yet
+        # TODO: check for assembly_path instead of name?
+        # make sure the assembly hasn't been added yet
         assert (
             assembly not in self.assemblies
         ), f"Assembly '{assembly}' has already been added to the database!"
 
+        # TODO: change into abs path: os.path.abspath(assembly_path)
         self.cursor.execute(
             f"INSERT INTO Assembly (Assembly, Species, Abspath) "
-            f"VALUES ('{assembly}', '{species}', '{assembly_file}')"
+            f"VALUES ('{assembly}', '{species}', '{assembly_path}')"
         )
 
-        # TODO: walrus operator in python3.8
-        assembly_id = self.cursor.execute(
-            f"SELECT AssemblyId FROM Assembly WHERE Assembly='{assembly}'"
-        ).fetchone()[0]
+        assembly_id = self.cursor.lastrowid
 
-        # now load the chromosome sizes
-        fasta = pyfaidx.Fasta(assembly_file)
+        # now fill the chromosome table
+        fasta = pyfaidx.Fasta(assembly_path)
         for sequence_name, sequence in fasta.items():
             self.cursor.execute(
                 f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome) "
                 f"    VALUES('{assembly_id}', '{len(sequence)}', '{sequence_name}')"
             )
 
+        # clean up after yourself
         self.conn.commit()
 
-    def add_data(self, data_file, assembly, condition=None):
+    def add_data(self, data_path: str, assembly: str, condition: str = None):
         """
+        Add data (bed or narrowPeak) to the database. The files are stored line by line
 
+        :param data_path: The path to the assembly file.
+        :param assembly: The name of the assembly. Requires the assembly to be added to the database
+        prior.
+        :param condition: Experimental condition (optional). This allows for filtering on conditions
+        , e.g. when streaming data with a DataSet.
         """
         # check for supported filetype
-        *_, extension = os.path.splitext(data_file)
+        *_, extension = os.path.splitext(data_path)
+        # TODO: add more extensions
         assert extension in [
             ".narrowPeak"
-        ], f"The file extension you choose is not supported, TODO"
+        ], f"The file extension you choose is not supported"
 
         # check if species it belongs to has already been added to the database
-        # TODO: walrus operator in python3.8
         assembly_id = self.cursor.execute(
             f"SELECT AssemblyId FROM Assembly WHERE Assembly='{assembly}'"
         ).fetchone()
         assembly_id = assembly_id[0] if assembly_id else assembly_id
         assert (
             assembly_id
-        ), f"Assembly '{assembly}' has not been added to the database yet."
+        ), f"Assembly '{assembly}' has not been added to the database yet. Before adding data you" \
+           f" should add assemblies with the DataBase.add_assembly method."
 
-        # check if the condition does not already exist for this species
-        self.cursor.execute(
-            f"SELECT Condition FROM Condition "
-            f"WHERE  AssemblyId='{assembly_id}' "
-            f"AND    Condition='{condition}'"
-        ).fetchone()
-        # TODO: what should default behaviour be (probably overwrite)?
-        if self.cursor.fetchone() is not None:
-            return
-        assert not self.cursor.fetchone(), (
-            f"Condition '{condition}' has already been added to "
-            f"the database for assembly '{assembly}'."
-        )
+        # Make sure that condition 'None' exists
+        self.cursor.execute("INSERT INTO Condition(ConditionId, Condition) SELECT 0, NULL "
+                            "WHERE NOT EXISTS(SELECT * FROM Condition WHERE ConditionId = 0)")
 
-        # add the condition
-        self.cursor.execute(
-            f"INSERT INTO Condition VALUES(NULL, '{condition}', '{assembly_id}')"
-        )
-
-        # TODO: walrus operator in python3.8
+        # get the condition id
         condition_id = self.cursor.execute(
             f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
         ).fetchone()
-        condition_id = condition_id[0] if condition_id else condition_id
-        bed = pybedtools.BedTool(data_file)
+        condition_id = condition_id[0] if condition_id else None
+
+        # add the condition if necessary
+        if condition and not condition_id:
+            self.cursor.execute(
+                f"INSERT INTO Condition VALUES(NULL, '{condition}')"
+            )
+
+        bed = pybedtools.BedTool(data_path)
         lines = []
         for region in bed:
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
@@ -163,6 +177,29 @@ class DataBase:
 
         self.conn.commit()
 
-    def create_index(self):
-        self.cursor.execute("CREATE INDEX Bed_AssemblyId_ChromosomeId_Chromstart_Chromend_idx ON "
-                            "BED (AssemblyId, ChromosomeId, ChromStart, ChromEnd)")
+    def create_index(self, overwrite=False):
+        """
+        Create indexes for faster queries. It is highly recommended to run this before loading data.
+        """
+        if overwrite:
+            # remove the index if exists and if we want to overwrite
+            for index in ['Bed_ChromosomeId_Chromstart_Chromend_idx',
+                        'Assembly_Assembly',
+                        'Chromosome_Chromosome_AssemblyId']:
+                self.cursor.execute(f"DROP INDEX IF EXISTS {index}")
+
+        # exit when still an index exists, since then we do not want to overwrite
+        indices = self.cursor.execute("PRAGMA INDEX_LIST('BED');").fetchall()
+        indices_flat = [item for sublist in indices for item in sublist]
+        if "Bed_ChromosomeId_Chromstart_Chromend_idx" in indices_flat:
+            return
+
+        # now add the indexes
+        self.cursor.execute("CREATE INDEX Bed_ChromosomeId_Chromstart_Chromend_idx ON "
+                            "BED (ChromosomeId, ChromStart, ChromEnd)")
+        self.cursor.execute("CREATE INDEX Assembly_Assembly ON "
+                            "Assembly (Assembly)")
+        self.cursor.execute("CREATE INDEX Chromosome_Chromosome_AssemblyId ON "
+                            "Chromosome (Chromosome, AssemblyId)")
+
+        self.conn.commit()

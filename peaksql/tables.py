@@ -26,9 +26,7 @@ CHR = (
 CON = (
     "Condition ("
     "    ConditionId INTEGER PRIMARY KEY AUTOINCREMENT, "
-    "    Condition TEXT,"
-    "    AssemblyId NOT NULL,"
-    "    FOREIGN KEY(AssemblyId) REFERENCES Assembly(AssemblyId)"
+    "    Condition TEXT"
     ")"
 )
 
@@ -38,7 +36,7 @@ BED = (
     "Bed ("
     "    BedId INTEGER PRIMARY KEY AUTOINCREMENT, "
     "    AssemblyId NOT NULL,"
-    "    ConditionId NOT NULL,"
+    "    ConditionId,"
     "    ChromosomeId NOT NULL,"    # 1.  chrom (chrom ID not name) (REQUIRED)
     "    ChromStart INT NOT NULL,"  # 2.  chromStart                (REQUIRED)
     "    ChromEnd INT NOT NULL,"    # 3.  chromEnd                  (REQUIRED)
