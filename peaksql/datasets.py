@@ -19,6 +19,7 @@ class DataSet(ABC):
         self.database_path = database
         self.databases = dict()
         self.seq_length = seq_length
+        self.in_memory = kwargs.get('in_memory', False)
 
         # sql(ite) lookup
         self.WHERE = where
@@ -70,7 +71,7 @@ class DataSet(ABC):
         """
         process = multiprocessing.current_process().name
         if process not in self.databases:
-            self.databases[process] = DataBase(self.database_path)
+            self.databases[process] = DataBase(self.database_path, in_memory=self.in_memory)
         return process
 
     def _index_to_site(self, index: int) -> (str, str, int, int):
@@ -205,4 +206,4 @@ class BedDataSet(DataSet):
 
         labels = np.any(positions, axis=1)
 
-        return labels
+        return labels[0]

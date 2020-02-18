@@ -17,13 +17,24 @@ class DataBase:
 
     It allows for ...
     """
-    def __init__(self, db: str = "PeakSQL.sqlite"):
+    def __init__(self, db: str = "PeakSQL.sqlite", in_memory: bool = False):
         self.db = db
 
         # connect, and set a relatively high timeout number for multiprocessing
         self.conn = sqlite3.connect(db, timeout=30)
         self.cursor = self.conn.cursor()
+        # WAL not really necessary here
         self.cursor.execute('PRAGMA journal_mode=WAL')
+
+        self.in_memory = in_memory
+        if in_memory:
+            # start a connection with our memory and move our database there
+            dest = sqlite3.connect(':memory:')
+            self.conn.backup(dest)
+
+            # replace the old connection and cursor with our new in-memory connection
+            self.conn = dest
+            self.cursor = self.conn.cursor()
 
         # register all the tables (Assembly, Chromosome, Condition, Peak)
         for table in [table for table in dir(tables) if not table.startswith("__")]:
@@ -82,6 +93,8 @@ class DataBase:
         :param species: The name of the species the assembly belongs to (optional: default is the
         assembly name)
         """
+        assert not self.in_memory, "It is currently not supported to add data with an in-memory " \
+                                   "database."
         # set defaults if none provided
         assembly = (
             assembly if assembly else os.path.basename(assembly_path).split(".")[0]
@@ -124,11 +137,14 @@ class DataBase:
         :param condition: Experimental condition (optional). This allows for filtering on conditions
         , e.g. when streaming data with a DataSet.
         """
+        assert not self.in_memory, "It is currently not supported to add data with an in-memory " \
+                                   "database."
         # check for supported filetype
         *_, extension = os.path.splitext(data_path)
         # TODO: add more extensions
         assert extension in [
-            ".narrowPeak"
+            ".narrowPeak",
+            ".bed"
         ], f"The file extension you choose is not supported"
 
         # check if species it belongs to has already been added to the database
@@ -163,7 +179,7 @@ class DataBase:
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
 
             if len(region.fields) == 3:
-                raise NotImplementedError
+                lines.append((assembly_id, condition_id, chromosome_id, *region.fields[:3], None, None, None, None, None, None))
             else:
                 assert len(region.fields) == 10, "TODO error message"
                 region.fields[-1] = int(region.fields[1]) + int(region.fields[-1])
