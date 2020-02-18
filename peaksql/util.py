@@ -64,9 +64,9 @@ def _sequence_to_onehot(sequence):
 
 def sequence_to_onehot(sequence):
     """
-    Convert a sequence of length n to one-hot encoding of shape (4 x n).
+    Convert a sequence of length n to one-hot encoding of shape (n x 4).
     """
-    return _sequence_to_onehot(str(sequence).upper().encode('utf-8')).T
+    return _sequence_to_onehot(str(sequence).upper().encode('utf-8'))
 
 
 @numba.jit(nopython=True, cache=True)
