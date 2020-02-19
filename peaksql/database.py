@@ -100,6 +100,7 @@ class DataBase:
             assembly if assembly else os.path.basename(assembly_path).split(".")[0]
         )
         species = species if species else assembly
+        abs_path = os.path.abspath(assembly_path)
 
         # TODO: what should default behaviour be (probably overwrite)?
         # TODO: check for assembly_path instead of name?
@@ -108,16 +109,15 @@ class DataBase:
             assembly not in self.assemblies
         ), f"Assembly '{assembly}' has already been added to the database!"
 
-        # TODO: change into abs path: os.path.abspath(assembly_path)
         self.cursor.execute(
             f"INSERT INTO Assembly (Assembly, Species, Abspath) "
-            f"VALUES ('{assembly}', '{species}', '{assembly_path}')"
+            f"VALUES ('{assembly}', '{species}', '{abs_path}')"
         )
 
         assembly_id = self.cursor.lastrowid
 
         # now fill the chromosome table
-        fasta = pyfaidx.Fasta(assembly_path)
+        fasta = pyfaidx.Fasta(abs_path)
         for sequence_name, sequence in fasta.items():
             self.cursor.execute(
                 f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome) "
