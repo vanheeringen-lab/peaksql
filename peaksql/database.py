@@ -179,10 +179,10 @@ class DataBase:
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
 
             if len(region.fields) == 3 and extension == '.bed':
-                lines.append((assembly_id, condition_id, chromosome_id, *region.fields[:3], None,
+                lines.append((condition_id, chromosome_id, *region.fields[:3], None,
                               None, None, None, None, None))
             elif len(region.fields) == 10 and extension == '.narrowPeak':
-                lines.append((assembly_id, condition_id, chromosome_id, *region.fields[1:]))
+                lines.append((condition_id, chromosome_id, *region.fields[1:]))
             else:
                 fields = {'.bed': 3, '.narrowPeak': 10}
                 assert False, f"Extension {extension} should have {fields[extension]} fields, " \
@@ -190,7 +190,7 @@ class DataBase:
 
         self.cursor.executemany(
             f"""INSERT INTO Bed """
-            f"""  VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", lines
+            f"""  VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", lines
         )
 
         self.conn.commit()

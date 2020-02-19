@@ -35,7 +35,6 @@ CON = (
 BED = (
     "Bed ("
     "    BedId INTEGER PRIMARY KEY AUTOINCREMENT, "
-    "    AssemblyId NOT NULL,"
     "    ConditionId,"
     "    ChromosomeId NOT NULL,"    # 1.  chrom (chrom ID not name) (REQUIRED)
     "    ChromStart INT NOT NULL,"  # 2.  chromStart                (REQUIRED)
@@ -47,7 +46,6 @@ BED = (
     "    PValue FLOAT,"             # 8.  pValue
     "    QValue FLOAT,"             # 9.  qValue
     "    Peak INT,"                 # 10. peak (chromStart + Peak)
-    "    FOREIGN KEY(AssemblyId)   REFERENCES Assembly(AssemblyId),"
     "    FOREIGN KEY(ChromosomeId) REFERENCES Chromosome(ChromosomeId),"
     "    FOREIGN KEY(ConditionId)  REFERENCES Condition(ConditionId)"
     ")"
