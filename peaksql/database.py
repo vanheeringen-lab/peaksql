@@ -182,8 +182,6 @@ class DataBase:
                 lines.append((assembly_id, condition_id, chromosome_id, *region.fields[:3], None,
                               None, None, None, None, None))
             elif len(region.fields) == 10 and extension == '.narrowPeak':
-                region.fields[-1] = int(region.fields[1]) + int(region.fields[-1])
-
                 lines.append((assembly_id, condition_id, chromosome_id, *region.fields[1:]))
             else:
                 fields = {'.bed': 3, '.narrowPeak': 10}
