@@ -25,7 +25,7 @@ install:
 
   # create env
   - conda env create -f environment.yml
-  - conda activate peaksql
+  - source activate peaksql
   - conda install coverage
 
 before_script:
