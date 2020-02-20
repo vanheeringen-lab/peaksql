@@ -4,7 +4,7 @@ import numpy as np
 
 
 @numba.jit(nopython=True, cache=True)
-def nuc_to_onehot_idx(nuc):
+def _nuc_to_onehot_idx(nuc):
     """
     Convert a nucleotide to a one hot index, where the indexes 0, 1, 2, 3 respectively correspond to
     A, C, G, T.
@@ -57,7 +57,7 @@ def nuc_to_onehot_idx(nuc):
 def _sequence_to_onehot(sequence):
     onehot = np.zeros((len(sequence), 4), dtype=numba.boolean)
     for i, nuc in enumerate(sequence):
-        onehot[i, nuc_to_onehot_idx(nuc)] = True
+        onehot[i, _nuc_to_onehot_idx(nuc)] = True
 
     return onehot
 
