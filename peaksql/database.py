@@ -102,19 +102,27 @@ class DataBase:
         species = species if species else assembly
         abs_path = os.path.abspath(assembly_path)
 
-        # TODO: what should default behaviour be (probably overwrite)?
+        # TODO: what should default behaviour be (probably overwrite) or ignore??
         # TODO: check for assembly_path instead of name?
         # make sure the assembly hasn't been added yet
         assert (
             assembly not in self.assemblies
         ), f"Assembly '{assembly}' has already been added to the database!"
 
+        # add the assembly to the assembly table
         self.cursor.execute(
             f"INSERT INTO Assembly (Assembly, Species, Abspath) "
             f"VALUES ('{assembly}', '{species}', '{abs_path}')"
         )
-
         assembly_id = self.cursor.lastrowid
+
+        # also add a virtual Bed table for R*Tree
+        self.cursor.execute(f"CREATE VIRTUAL TABLE BedVirtual_{assembly_id} USING rtree("
+                            f"    BedId INT, "  # Foreign key not implemented
+                            f"    ChromStart INT, "
+                            f"    ChromEnd INT, "
+                            f")"
+                            )
 
         # now fill the chromosome table
         fasta = pyfaidx.Fasta(abs_path)
@@ -175,6 +183,14 @@ class DataBase:
 
         bed = pybedtools.BedTool(data_path)
         lines = []
+
+        # get the current BedId we are at
+        highest_id = self.cursor.execute("SELECT BedId FROM Bed ORDER BY BedId DESC LIMIT 1").fetchone()
+        if not highest_id:
+            highest_id = 0
+        else:
+            highest_id = highest_id[0]
+
         for region in bed:
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
 
@@ -192,6 +208,17 @@ class DataBase:
             f"""INSERT INTO Bed """
             f"""  VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", lines
         )
+        self.conn.commit()
+
+        # TODO: reformat data loading
+        # TODO: chromend and chromstart are twice in the database, once in Bed and once in
+        # BedVirtual
+        # also add each bed entry to the BedVirtual table
+        for i, line in enumerate(lines):
+            sth = f"INSERT INTO BedVirtual_{assembly_id}(BedId, ChromStart, ChromEnd) "\
+                  f"VALUES({highest_id + i + 1}, {line[2]}, {line[3]})"
+            print(sth)
+            self.cursor.execute(sth)
 
         self.conn.commit()
 

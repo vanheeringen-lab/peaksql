@@ -194,13 +194,17 @@ class BedDataSet(DataSet):
         assemblyid = self.database.get_assembly_id(assembly)
         chromosomeid = self.database.get_chrom_id(assemblyid, chrom)
 
-        active_conds = self.database.cursor.execute(f"""
-                SELECT ConditionId, ChromStart, ChromEnd FROM Bed
-                Where ChromosomeId={chromosomeid} AND
-                ({chromstart} <= ChromEnd) AND ({chromend} >= ChromStart)
-                """).fetchall()
+        bed_virtual = f"BedVirtual_{assemblyid}"
+        self.database.cursor.execute(f"""
+            SELECT Bed.ChromosomeId, Bed.ConditionId, Bed.ChromStart, Bed.ChromEnd FROM {bed_virtual}
+            INNER JOIN Bed on {bed_virtual}.BedId = Bed.BedId
+            WHERE ({chromstart} <= {bed_virtual}.ChromEnd) AND ({chromend} >= {bed_virtual}.ChromStart)
+        """)
+        active_conds = self.database.cursor.fetchall()
 
+        active_conds = [active_cond[1:] for active_cond in active_conds if active_cond[0] == chromosomeid]
         positions = np.zeros((len(self.all_conditions), chromend - chromstart), dtype=bool)
+        # FIXME: this is wrong :)
         for condition_id, start, end in active_conds:
             positions[condition_id, start:end] = True
 
