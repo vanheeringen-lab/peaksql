@@ -195,7 +195,7 @@ class DataBase:
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
 
             if len(region.fields) == 3 and extension == '.bed':
-                lines.append((condition_id, chromosome_id, *region.fields[:3], None,
+                lines.append((condition_id, chromosome_id, *region.fields[1:3], None, None,
                               None, None, None, None, None))
             elif len(region.fields) == 10 and extension == '.narrowPeak':
                 lines.append((condition_id, chromosome_id, *region.fields[1:]))
@@ -217,7 +217,6 @@ class DataBase:
         for i, line in enumerate(lines):
             sth = f"INSERT INTO BedVirtual_{assembly_id}(BedId, ChromStart, ChromEnd) "\
                   f"VALUES({highest_id + i + 1}, {line[2]}, {line[3]})"
-            print(sth)
             self.cursor.execute(sth)
 
         self.conn.commit()

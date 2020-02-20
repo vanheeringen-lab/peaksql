@@ -25,7 +25,7 @@ CHR = (
 # Condition table
 CON = (
     "Condition ("
-    "    ConditionId INTEGER PRIMARY KEY AUTOINCREMENT, "
+    "    ConditionId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    Condition TEXT"
     ")"
 )
@@ -34,7 +34,7 @@ CON = (
 # fmt: off
 BED = (
     "Bed ("
-    "    BedId INTEGER PRIMARY KEY AUTOINCREMENT, "
+    "    BedId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    ConditionId,"
     "    ChromosomeId NOT NULL,"    # 1.  chrom (chrom ID not name) (REQUIRED)
     "    ChromStart INT NOT NULL,"  # 2.  chromStart                (REQUIRED)
