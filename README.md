@@ -1,3 +1,3 @@
 # PeakSQL
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/a77d623fef08643fb0ef/maintainability)](https://codeclimate.com/github/vanheeringen-lab/PeakSQL/maintainability)
+[![Maintainability](https://api.codeclimate.com/v1/badges/d5f1443a164eb0d64d33/maintainability)](https://codeclimate.com/github/vanheeringen-lab/peaksql/maintainability)
