@@ -9,6 +9,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7]
+        os: ['ubuntu-latest', 'macos-latest']
 
     steps:
     - uses: actions/checkout@v2
@@ -18,10 +19,11 @@ jobs:
       with:
        activate-environment: peaksql
        environment-file: environment.yml
-       python-version: 3.7
+       python-version: ${{ matrix.python-version }}
        auto-activate-base: false
-    
+
     - name: Install coverage
+      shell: bash -l {0}
       run: |
         source activate peaksql
         conda install coverage
