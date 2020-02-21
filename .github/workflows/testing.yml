@@ -1,0 +1,32 @@
+name: Testing
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Miniconda
+      uses: goanpeca/setup-miniconda@v1.0.2
+      with:
+       activate-environment: peaksql
+       environment-file: environment.yml
+       python-version: 3.7
+       auto-activate-base: false
+    
+    - name: Install coverage
+      run: |
+        conda activate peaksql
+        conda install coverage
+
+    - name: Test 
+      run: |
+        coverage run -m unittest discover test
+        coverage xml
