@@ -79,6 +79,9 @@ def binary_search(index, lens):
     lens: [0, 4, 6, 8, 22]
     returns: 2
     """
+    if index < 0 or index >= lens[-1]:
+        raise ValueError("Invalid index")
+
     # FIXME: this can hang in infinite loop, and because of numba becomes unresponsive.
     left, right = 0, len(lens)
 
@@ -92,7 +95,6 @@ def binary_search(index, lens):
             left = mid
 
         else:
-            assert lens[mid - 1] <= index < lens[mid]
             return mid
 
     assert False
