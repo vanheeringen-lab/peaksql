@@ -23,7 +23,7 @@ jobs:
     
     - name: Install coverage
       run: |
-        conda activate peaksql
+        source activate peaksql
         conda install coverage
 
     - name: Test 
