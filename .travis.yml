@@ -9,24 +9,26 @@ env:
 
 
 install:
-  # install (mini)conda
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
+  - if [[ ! -d $HOME/miniconda/bin/ || $TRAVIS_EVENT_TYPE =~ cron ]]; then
+      # install (mini)conda
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+      bash miniconda.sh -b -p $HOME/miniconda
+      export PATH="$HOME/miniconda/bin:$PATH"
+      hash -r
+      conda config --set always_yes yes --set changeps1 no
+      conda update -q conda
 
-  # Useful for debugging any issues with conda
-  - conda info -a
-  - conda config --add channels defaults
-  - conda config --add channels conda-forge
-  - conda config --add channels bioconda
+      # Useful for debugging any issues with conda
+      conda info -a
+      conda config --add channels defaults
+      conda config --add channels conda-forge
+      conda config --add channels bioconda
 
-  # create env
-  - conda env create -f environment.yml
-  - source activate peaksql
-  - conda install coverage
+      # create env
+      conda env create -f environment.yml
+      source activate peaksql
+      conda install coverage
+    fi
 
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
@@ -41,3 +43,8 @@ script:
 
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT --coverage-input-type coverage.py
+
+# speedup the slow build of our environment by caching (mini)conda
+cache:
+    directories:
+     - ${HOME}/miniconda
