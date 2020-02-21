@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import random
 
 import peaksql.util
 
@@ -10,7 +11,103 @@ SEQ_LEN = 200
 class TestBackground(unittest.TestCase):
     """ A test class to test the util of peaksql """
 
-    def test_single_nucleotide_IUPAC_ACGT(self):
+    def test_IUPAC_A_to_idx(self):
+        onehot_idx = peaksql.util._nuc_to_onehot_idx.py_func(ord('A'))
+        assert onehot_idx == 0
+
+    def test_IUPAC_C_to_idx(self):
+        onehot_idx = peaksql.util._nuc_to_onehot_idx.py_func(ord('C'))
+        assert onehot_idx == 1
+
+    def test_IUPAC_G_to_idx(self):
+        onehot_idx = peaksql.util._nuc_to_onehot_idx.py_func(ord('G'))
+        assert onehot_idx == 2
+
+    def test_IUPAC_T_to_idx(self):
+        onehot_idx = peaksql.util._nuc_to_onehot_idx.py_func(ord('T'))
+        assert onehot_idx == 3
+
+    def test_IUPAC_R_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('R')) for _ in range(SEQ_LEN)])
+        assert np.any(onehot_idx == 0)
+        assert not np.any(onehot_idx == 1)
+        assert np.any(onehot_idx == 2)
+        assert not np.any(onehot_idx == 3)
+
+    def test_IUPAC_Y_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('Y')) for _ in range(SEQ_LEN)])
+        assert not np.any(onehot_idx == 0)
+        assert np.any(onehot_idx == 1)
+        assert not np.any(onehot_idx == 2)
+        assert np.any(onehot_idx == 3)
+
+    def test_IUPAC_S_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('S')) for _ in range(SEQ_LEN)])
+        assert not np.any(onehot_idx == 0)
+        assert np.any(onehot_idx == 1)
+        assert np.any(onehot_idx == 2)
+        assert not np.any(onehot_idx == 3)
+
+    def test_IUPAC_W_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('W')) for _ in range(SEQ_LEN)])
+        assert np.any(onehot_idx == 0)
+        assert not np.any(onehot_idx == 1)
+        assert not np.any(onehot_idx == 2)
+        assert np.any(onehot_idx == 3)
+
+    def test_IUPAC_K_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('K')) for _ in range(SEQ_LEN)])
+        assert not np.any(onehot_idx == 0)
+        assert not np.any(onehot_idx == 1)
+        assert np.any(onehot_idx == 2)
+        assert np.any(onehot_idx == 3)
+
+    def test_IUPAC_M_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('M')) for _ in range(SEQ_LEN)])
+        assert np.any(onehot_idx == 0)
+        assert np.any(onehot_idx == 1)
+        assert not np.any(onehot_idx == 2)
+        assert not np.any(onehot_idx == 3)
+
+    def test_IUPAC_B_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('B')) for _ in range(SEQ_LEN)])
+        assert not np.any(onehot_idx == 0)
+        assert np.any(onehot_idx == 1)
+        assert np.any(onehot_idx == 2)
+        assert np.any(onehot_idx == 3)
+
+    def test_IUPAC_D_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('D')) for _ in range(SEQ_LEN)])
+        assert np.any(onehot_idx == 0)
+        assert not np.any(onehot_idx == 1)
+        assert np.any(onehot_idx == 2)
+        assert np.any(onehot_idx == 3)
+
+    def test_IUPAC_H_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('H')) for _ in range(SEQ_LEN)])
+        assert np.any(onehot_idx == 0)
+        assert np.any(onehot_idx == 1)
+        assert not np.any(onehot_idx == 2)
+        assert np.any(onehot_idx == 3)
+
+    def test_IUPAC_V_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('V')) for _ in range(SEQ_LEN)])
+        assert np.any(onehot_idx == 0)
+        assert np.any(onehot_idx == 1)
+        assert np.any(onehot_idx == 2)
+        assert not np.any(onehot_idx == 3)
+
+    def test_IUPAC_N_to_idx(self):
+        onehot_idx = np.array([peaksql.util._nuc_to_onehot_idx.py_func(ord('N')) for _ in range(SEQ_LEN)])
+        assert np.any(onehot_idx == 0)
+        assert np.any(onehot_idx == 1)
+        assert np.any(onehot_idx == 2)
+        assert np.any(onehot_idx == 3)
+
+    def test_IUPAC_wrong(self):
+        self.assertRaises(ValueError, peaksql.util._nuc_to_onehot_idx.py_func, ord('Q'))
+
+    def test_sequence_to_onehot(self):
         """
         Test whether single-nucleotide IUPAC codes are converted correctly into one-hot encoding.
         """
@@ -26,90 +123,25 @@ class TestBackground(unittest.TestCase):
                          [False, False, False, True]], dtype=bool)
         np.testing.assert_array_equal(onehot, true)
 
-    def test_multi_nucleotide_IUPAC_R(self):
-        sequence = "".join(["R"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert np.any(onehot[:, 0])
-        assert not np.any(onehot[:, 1])
-        assert np.any(onehot[:, 2])
-        assert not np.any(onehot[:, 3])
+    def test_binary_search_out_of_bound(self):
+        haystack = np.array([0, 5, 10, 12, 22])
 
-    def test_multi_nucleotide_IUPAC_Y(self):
-        sequence = "".join(["Y"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert not np.any(onehot[:, 0])
-        assert np.any(onehot[:, 1])
-        assert not np.any(onehot[:, 2])
-        assert np.any(onehot[:, 3])
+        # call each function twice, once jit compiled and once not compiled for coverage
+        self.assertRaises(ValueError, peaksql.util.binary_search, -1, haystack)
+        self.assertRaises(ValueError, peaksql.util.binary_search.py_func, -1, haystack)
 
-    def test_multi_nucleotide_IUPAC_S(self):
-        sequence = "".join(["S"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert not np.any(onehot[:, 0])
-        assert np.any(onehot[:, 1])
-        assert np.any(onehot[:, 2])
-        assert not np.any(onehot[:, 3])
+        self.assertRaises(ValueError, peaksql.util.binary_search, 22, haystack)
+        self.assertRaises(ValueError, peaksql.util.binary_search.py_func, 22, haystack)
 
-    def test_multi_nucleotide_IUPAC_W(self):
-        sequence = "".join(["W"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert np.any(onehot[:, 0])
-        assert not np.any(onehot[:, 1])
-        assert not np.any(onehot[:, 2])
-        assert np.any(onehot[:, 3])
+    def test_binary_search(self):
+        haystack = np.array([0, 5, 10, 12, 22])
 
-    def test_multi_nucleotide_IUPAC_K(self):
-        sequence = "".join(["K"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert not np.any(onehot[:, 0])
-        assert not np.any(onehot[:, 1])
-        assert np.any(onehot[:, 2])
-        assert np.any(onehot[:, 3])
+        # call each function twice, once jit compiled and once not compiled for coverage
+        assert peaksql.util.binary_search(0, haystack) == 1
+        assert peaksql.util.binary_search.py_func(0, haystack) == 1
 
-    def test_multi_nucleotide_IUPAC_M(self):
-        sequence = "".join(["M"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert np.any(onehot[:, 0])
-        assert np.any(onehot[:, 1])
-        assert not np.any(onehot[:, 2])
-        assert not np.any(onehot[:, 3])
+        assert peaksql.util.binary_search(1, haystack) == 1
+        assert peaksql.util.binary_search.py_func(1, haystack) == 1
 
-    def test_multi_nucleotide_IUPAC_B(self):
-        sequence = "".join(["B"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert not np.any(onehot[:, 0])
-        assert np.any(onehot[:, 1])
-        assert np.any(onehot[:, 2])
-        assert np.any(onehot[:, 3])
-
-    def test_multi_nucleotide_IUPAC_D(self):
-        sequence = "".join(["D"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert np.any(onehot[:, 0])
-        assert not np.any(onehot[:, 1])
-        assert np.any(onehot[:, 2])
-        assert np.any(onehot[:, 3])
-
-    def test_multi_nucleotide_IUPAC_H(self):
-        sequence = "".join(["H"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert np.any(onehot[:, 0])
-        assert np.any(onehot[:, 1])
-        assert not np.any(onehot[:, 2])
-        assert np.any(onehot[:, 3])
-
-    def test_multi_nucleotide_IUPAC_V(self):
-        sequence = "".join(["V"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert np.any(onehot[:, 0])
-        assert np.any(onehot[:, 1])
-        assert np.any(onehot[:, 2])
-        assert not np.any(onehot[:, 3])
-
-    def test_multi_nucleotide_IUPAC_N(self):
-        sequence = "".join(["N"] * SEQ_LEN)
-        onehot = peaksql.util.sequence_to_onehot(sequence)
-        assert np.any(onehot[:, 0])
-        assert np.any(onehot[:, 1])
-        assert np.any(onehot[:, 2])
-        assert np.any(onehot[:, 3])
+        assert peaksql.util.binary_search(14, haystack) == 4
+        assert peaksql.util.binary_search.py_func(14, haystack) == 4
