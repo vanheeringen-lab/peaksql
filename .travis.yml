@@ -9,8 +9,8 @@ env:
 
 
 install:
-  - if [[ ! -d $HOME/miniconda/bin/ || $TRAVIS_EVENT_TYPE =~ cron ]]; then
-      # install (mini)conda
+  - if [[ ! -d $HOME/miniconda/bin/ || $TRAVIS_EVENT_TYPE =~ cron ]];
+    then
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
       bash miniconda.sh -b -p $HOME/miniconda
       export PATH="$HOME/miniconda/bin:$PATH"
@@ -18,16 +18,16 @@ install:
       conda config --set always_yes yes --set changeps1 no
       conda update -q conda
 
-      # Useful for debugging any issues with conda
       conda info -a
       conda config --add channels defaults
       conda config --add channels conda-forge
       conda config --add channels bioconda
 
-      # create env
       conda env create -f environment.yml
       source activate peaksql
       conda install coverage
+    else
+      export PATH="$HOME/miniconda/bin:$PATH"
     fi
 
 before_script:
