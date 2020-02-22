@@ -39,6 +39,7 @@ jobs:
         chmod +x ./cc-test-reporter
 
         coverage run -m unittest discover test
+        coverage xml
 
         ./cc-test-reporter format-coverage -t lcov coverage/lcov.info
         ./cc-test-reporter upload-coverage
