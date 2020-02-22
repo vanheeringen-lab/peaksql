@@ -48,6 +48,6 @@ jobs:
       env:
         CC_TEST_REPORTER_ID: ${{secrets.CodeCoverage}}
       with:
-        coverageCommand: source activate peaksql; coverage run -m unittest discover test
+        coverageCommand: conda init bash; conda activate peaksql; coverage run -m unittest discover test
         debug: true
         shell: bash -l {0}
