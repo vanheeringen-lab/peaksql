@@ -49,7 +49,7 @@ jobs:
         CC_TEST_REPORTER_ID: ${{secrets.CodeCoverage}}
       with:
         coverageCommand: |
-          conda init bash;
+          conda init bash
           conda activate peaksql
         debug: true
         shell: bash -l {0}
