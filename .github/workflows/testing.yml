@@ -27,9 +27,20 @@ jobs:
         conda install coverage
 
     - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v2.4.0
       env:
         CC_TEST_REPORTER_ID: ${{secrets.CodeCoverage}}
+      uses: paambaati/codeclimate-action@v2.4.0
       with:
         coverageCommand: bash -l {0}; npm run coverage
         debug: true
+      shell: bash -l {0}
+      run: coverage run -m unittest discover test
+
+
+#     - name: Test & publish code coverage
+#       uses: paambaati/codeclimate-action@v2.4.0
+#       env:
+#         CC_TEST_REPORTER_ID: ${{secrets.CodeCoverage}}
+#       with:
+#         coverageCommand: bash -l {0}; npm run coverage
+#         debug: true
