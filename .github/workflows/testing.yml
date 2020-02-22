@@ -49,6 +49,7 @@ jobs:
         CC_TEST_REPORTER_ID: ${{secrets.CodeCoverage}}
       with:
         coverageCommand: |
+          conda init powershell
           conda activate peaksql
         debug: true
         shell: powershell
