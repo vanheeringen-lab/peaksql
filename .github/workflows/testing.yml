@@ -13,7 +13,9 @@ jobs:
         os: ['ubuntu-latest']
 
     steps:
-    - uses: actions/checkout@v2, goanpeca/setup-miniconda@v1.0.2
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - uses: goanpeca/setup-miniconda@v1.0.2
       with:
        activate-environment: peaksql
        environment-file: environment.yml
