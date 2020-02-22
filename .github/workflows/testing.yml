@@ -20,18 +20,18 @@ jobs:
        activate-environment: peaksql
        environment-file: environment.yml
        python-version: ${{ matrix.python-version }}
-       shell: pwsh
+       shell: bash -l {0}
 
     - name: Install coverage
       run: |
         conda install coverage
-      shell: pwsh
+      shell: bash -l {0}
 
 
     - name: Test & publish code coverage
       env:
         CC_TEST_REPORTER_ID: ${{secrets.CodeCoverage}}
-      shell: pwsh
+      shell: bash -l {0}
       run: |
         export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
 
