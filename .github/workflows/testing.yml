@@ -27,6 +27,7 @@ jobs:
         conda install coverage
 
     - name: Test 
+      shell: bash -l {0}
       run: |
         coverage run -m unittest discover test
         coverage xml
