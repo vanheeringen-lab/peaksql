@@ -18,6 +18,7 @@ jobs:
        activate-environment: peaksql
        environment-file: environment.yml
        python-version: ${{ matrix.python-version }}
+       shell: bash -l {0}
 
     - name: Install coverage
       run: |
