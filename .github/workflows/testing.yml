@@ -20,12 +20,12 @@ jobs:
        activate-environment: peaksql
        environment-file: environment.yml
        python-version: ${{ matrix.python-version }}
-       shell: bash -l {0}
+       shell: powershell
 
     - name: Install coverage
       run: |
         conda install coverage
-      shell: bash -l {0}
+      shell: powershell
 
 
 #     - name: Test & publish code coverage
