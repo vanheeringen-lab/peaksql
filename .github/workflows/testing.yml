@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7]
-        os: ['ubuntu-latest']
+        os: ['ubuntu-latest', 'macos-latest']
 
     steps:
     - name: Check out repository
@@ -41,3 +41,4 @@ jobs:
         curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
         chmod +x ./cc-test-reporter
         ./cc-test-reporter after-build --coverage-input-type coverage.py
+      shell: bash -l {0}
