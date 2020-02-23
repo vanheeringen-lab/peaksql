@@ -1,0 +1,51 @@
+name: ContinuousIntegration
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.7]
+        os: ['ubuntu-latest', 'macos-latest']
+      fail-fast: false
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - uses: goanpeca/setup-miniconda@v1.0.2
+      with:
+       activate-environment: peaksql
+       environment-file: environment.yml
+       python-version: ${{ matrix.python-version }}
+       shell: bash -l {0}
+
+    - name: Install CI related
+      shell: bash -l {0}
+      run: |
+        conda install coverage
+
+    - name: Setup Code Climate code coverage
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        chmod +x ./cc-test-reporter
+
+    - name: Test
+      shell: bash -l {0}
+      run: |
+        coverage run -m unittest discover test
+        coverage xml
+
+    - name: Report Code Climate code coverage
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
+      run: |
+        ./cc-test-reporter after-build --coverage-input-type coverage.py
