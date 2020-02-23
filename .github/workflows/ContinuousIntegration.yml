@@ -61,7 +61,7 @@ jobs:
     - name: Report Code Climate code coverage  (success)
       if: matrix.os == 'ubuntu-latest'
       env:
-        GIT_COMMIT_SHA: github.sha
+        GIT_COMMIT_SHA: ${{ github.sha }}
         CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
       run: |
         ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 0 --debug
