@@ -59,14 +59,8 @@ jobs:
         coverage xml
 
     - name: Report Code Climate code coverage  (success)
-      if: success() && matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest'
       env:
         CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
       run: |
         ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 0
-#     - name: Report Code Climate code coverage (success)
-#       if: success() && matrix.os == 'ubuntu-latest'
-#       env:
-#         CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
-#       run: |
-#         ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 0
