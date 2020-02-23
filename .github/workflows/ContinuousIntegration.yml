@@ -64,4 +64,4 @@ jobs:
         GIT_COMMIT_SHA: github.sha
         CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
       run: |
-        ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 0
+        ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 0 --debug
