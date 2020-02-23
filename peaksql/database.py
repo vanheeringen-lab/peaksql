@@ -18,6 +18,7 @@ class DataBase:
     It allows for ...
     """
     def __init__(self, db: str = "PeakSQL.sqlite", in_memory: bool = False):
+        pass
         self.db = db
 
         # connect, and set a relatively high timeout number for multiprocessing
