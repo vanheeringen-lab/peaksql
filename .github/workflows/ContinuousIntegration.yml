@@ -50,7 +50,7 @@ jobs:
       env:
         CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
       run: |
-        GIT_BRANCH=$GITHUB_REF GIT_COMMIT_SHA=$GITHUB_SHA  ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 1
+        GIT_BRANCH=$GITHUB_REF GIT_COMMIT_SHA=$GITHUB_SHA  ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 0
 #     - name: Report Code Climate code coverage (success)
 #       if: success() && matrix.os == 'ubuntu-latest'
 #       env:
