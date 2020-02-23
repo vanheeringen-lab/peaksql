@@ -36,13 +36,13 @@ jobs:
       run: |
         git fetch --no-tags --prune --depth=1 origin +refs/heads/$GITHUB_HEAD_REF:refs/remotes/origin/$GITHUB_HEAD_REF
         echo "::set-env name=GIT_BRANCH::$GITHUB_HEAD_REF"
-        echo "::set-env name=GIT_COMMIT_SHA::$(git rev-parse origin/$GITHUB_HEAD_REF)"
+#        echo "::set-env name=GIT_COMMIT_SHA::$(git rev-parse origin/$GITHUB_HEAD_REF)"
       if: github.event_name == 'pull_request'
 
     - name: Set ENV for codeclimate (push)
       run: |
         echo "::set-env name=GIT_BRANCH::$GITHUB_REF"
-        echo "::set-env name=GIT_COMMIT_SHA::$GITHUB_SHA"
+#        echo "::set-env name=GIT_COMMIT_SHA::$GITHUB_SHA"
       if: github.event_name == 'push'
 
     - name: Setup Code Climate code coverage
@@ -61,6 +61,7 @@ jobs:
     - name: Report Code Climate code coverage  (success)
       if: matrix.os == 'ubuntu-latest'
       env:
+        GIT_COMMIT_SHA: github.sha
         CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
       run: |
         ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 0
