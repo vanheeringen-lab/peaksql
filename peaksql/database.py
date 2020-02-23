@@ -23,8 +23,6 @@ class DataBase:
         # connect, and set a relatively high timeout number for multiprocessing
         self.conn = sqlite3.connect(db, timeout=30)
         self.cursor = self.conn.cursor()
-        # WAL not really necessary here
-        self.cursor.execute('PRAGMA journal_mode=WAL')
 
         self.in_memory = in_memory
         if in_memory:
@@ -54,23 +52,29 @@ class DataBase:
         """
         Quickly get the AssemblyId based on Assembly (name).
         """
-        return self.cursor.execute(
+        result = self.cursor.execute(
             f"SELECT AssemblyId FROM Assembly "
             f"    WHERE Assembly='{assembly_name}' "
             f"LIMIT 1"
-        ).fetchone()[0]
+        ).fetchone()
+        if result:
+            return result[0]
+        raise ValueError(f"Assembly {assembly_name} is not present in the database")
 
     @lru_cache(maxsize=2**16)
     def get_chrom_id(self, assembly_id, chrom_name):
         """
         Quickly get the ChromosomeId based on assemblyId and Chromosome (name).
         """
-        return self.cursor.execute(
+        result = self.cursor.execute(
             f"SELECT ChromosomeId FROM Chromosome "
             f"    WHERE Chromosome='{chrom_name}' "
             f"    AND AssemblyId='{assembly_id}'"
             f"LIMIT 1"
-        ).fetchone()[0]
+        ).fetchone()
+        if result:
+            return result[0]
+        raise ValueError(f"No chromosome {chrom_name} for assembly with assembly id {assembly_id}")
 
     @property
     def assemblies(self):
