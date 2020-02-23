@@ -1,10 +1,10 @@
 name: ContinuousIntegration
 
 on:
+  pull_request:
   push:
     branches:
       - master
-  pull_request:
 
 
 jobs:
@@ -32,13 +32,18 @@ jobs:
       run: |
         conda install coverage
 
-    - name: Setup Code Climate code coverage
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
-        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-        chmod +x ./cc-test-reporter
-        ./cc-test-reporter before-build
+      - name: Set ENV for codeclimate (pull_request)
+        run: |
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/$GITHUB_HEAD_REF:refs/remotes/origin/$GITHUB_HEAD_REF
+          echo "::set-env name=GIT_BRANCH::$GITHUB_HEAD_REF"
+          echo "::set-env name=GIT_COMMIT_SHA::$(git rev-parse origin/$GITHUB_HEAD_REF)"
+        if: github.event_name == 'pull_request'
+
+      - name: Set ENV for codeclimate (push)
+        run: |
+          echo "::set-env name=GIT_BRANCH::$GITHUB_REF"
+          echo "::set-env name=GIT_COMMIT_SHA::$GITHUB_SHA"
+        if: github.event_name == 'push'
 
     - name: Test
       shell: bash -l {0}
@@ -51,7 +56,7 @@ jobs:
       env:
         CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
       run: |
-        ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 1
+        GIT_BRANCH=$GITHUB_REF GIT_COMMIT_SHA=$GITHUB_SHA ./cc-test-reporter after-build -t simplecov --exit-code 1
 
     - name: Report Code Climate code coverage (success)
       if: success() && matrix.os == 'ubuntu-latest'
