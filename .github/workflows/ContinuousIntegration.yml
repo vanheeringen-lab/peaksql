@@ -46,7 +46,7 @@ jobs:
         coverage xml
 
     - name: Report Code Climate code coverage  (failure)
-#       if: failure() && matrix.os == 'ubuntu-latest'
+      if: failure() && matrix.os == 'ubuntu-latest'
       env:
         CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
       run: |
