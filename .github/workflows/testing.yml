@@ -24,7 +24,7 @@ jobs:
 
     - name: Install coverage
       run: |
-        conda install coverage
+        conda install coverage nodejs
       shell: bash -l {0}
 
 #     - name: Test & publish code coverage
