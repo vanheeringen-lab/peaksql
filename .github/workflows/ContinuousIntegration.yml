@@ -7,7 +7,6 @@ on:
     branches:
       - master
 
-shell:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
