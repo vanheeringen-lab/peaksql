@@ -39,8 +39,8 @@ jobs:
       with:
         coverageCommand: | 
           conda init powershell
-          conda activate peaksql
-          conda list
+#          conda activate peaksql
+#          conda list
         debug: true
 
 #     - name: Set ENV for codeclimate (pull_request)
