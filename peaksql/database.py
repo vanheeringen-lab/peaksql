@@ -13,10 +13,12 @@ import peaksql.tables as tables
 
 class DataBase:
     """
-    The DataBase class is an easy interface to store pre-processed NGS data for Machine Learning.
+    The DataBase class is an easy interface to store pre-processed NGS data for Machine
+    Learning.
 
     It allows for ...
     """
+
     def __init__(self, db: str = "PeakSQL.sqlite", in_memory: bool = False):
         self.db = db
 
@@ -27,7 +29,7 @@ class DataBase:
         self.in_memory = in_memory
         if in_memory:
             # start a connection with our memory and move our database there
-            dest = sqlite3.connect(':memory:')
+            dest = sqlite3.connect(":memory:")
             self.conn.backup(dest)
 
             # replace the old connection and cursor with our new in-memory connection
@@ -61,7 +63,7 @@ class DataBase:
             return result[0]
         raise ValueError(f"Assembly {assembly_name} is not present in the database")
 
-    @lru_cache(maxsize=2**16)
+    @lru_cache(maxsize=2 ** 16)
     def get_chrom_id(self, assembly_id, chrom_name):
         """
         Quickly get the ChromosomeId based on assemblyId and Chromosome (name).
@@ -74,7 +76,9 @@ class DataBase:
         ).fetchone()
         if result:
             return result[0]
-        raise ValueError(f"No chromosome {chrom_name} for assembly with assembly id {assembly_id}")
+        raise ValueError(
+            f"No chromosome {chrom_name} for assembly with assembly id {assembly_id}"
+        )
 
     @property
     def assemblies(self):
@@ -86,19 +90,23 @@ class DataBase:
             for val in self.cursor.execute(f"SELECT Assembly FROM Assembly").fetchall()
         ]
 
-    def add_assembly(self, assembly_path: str, assembly: str = None, species: str = None):
+    def add_assembly(
+        self, assembly_path: str, assembly: str = None, species: str = None
+    ):
         """
-        Add an assembly (genome) to the database. Sequences from the assembly are retrieved with
-        PyFaidx, and the database assumes the assembly does not change location during during its
-        lifetime.
+        Add an assembly (genome) to the database. Sequences from the assembly are
+        retrieved with PyFaidx, and the database assumes the assembly does not change
+        location during during its lifetime.
 
         :param assembly_path: The path to the assembly file.
-        :param assembly: The name of the assembly (optional: default is the name of the file).
-        :param species: The name of the species the assembly belongs to (optional: default is the
-        assembly name)
+        :param assembly: The name of the assembly (optional: default is the name of the
+                         file).
+        :param species: The name of the species the assembly belongs to (optional:
+                        default is the assembly name)
         """
-        assert not self.in_memory, "It is currently not supported to add data with an in-memory " \
-                                   "database."
+        assert not self.in_memory, (
+            "It is currently not supported to add data with an in-memory " "database."
+        )
         # set defaults if none provided
         assembly = (
             assembly if assembly else os.path.basename(assembly_path).split(".")[0]
@@ -121,12 +129,13 @@ class DataBase:
         assembly_id = self.cursor.lastrowid
 
         # also add a virtual Bed table for R*Tree
-        self.cursor.execute(f"CREATE VIRTUAL TABLE BedVirtual_{assembly_id} USING rtree("
-                            f"    BedId INT, "  # Foreign key not implemented
-                            f"    ChromStart INT, "
-                            f"    ChromEnd INT, "
-                            f")"
-                            )
+        self.cursor.execute(
+            f"CREATE VIRTUAL TABLE BedVirtual_{assembly_id} USING rtree("
+            f"    BedId INT, "  # Foreign key not implemented
+            f"    ChromStart INT, "
+            f"    ChromEnd INT, "
+            f")"
+        )
 
         # now fill the chromosome table
         fasta = pyfaidx.Fasta(abs_path)
@@ -144,19 +153,20 @@ class DataBase:
         Add data (bed or narrowPeak) to the database. The files are stored line by line
 
         :param data_path: The path to the assembly file.
-        :param assembly: The name of the assembly. Requires the assembly to be added to the database
-        prior.
-        :param condition: Experimental condition (optional). This allows for filtering on conditions
-        , e.g. when streaming data with a DataSet.
+        :param assembly: The name of the assembly. Requires the assembly to be added to
+                         the database prior.
+        :param condition: Experimental condition (optional). This allows for filtering
+                          on conditions , e.g. when streaming data with a DataSet.
         """
-        assert not self.in_memory, "It is currently not supported to add data with an in-memory " \
-                                   "database."
+        assert not self.in_memory, (
+            "It is currently not supported to add data with an in-memory " "database."
+        )
         # check for supported filetype
         *_, extension = os.path.splitext(data_path)
         # TODO: add more extensions
         assert extension in [
             ".narrowPeak",
-            ".bed"
+            ".bed",
         ], f"The file extension you choose is not supported"
 
         # check if species it belongs to has already been added to the database
@@ -164,14 +174,17 @@ class DataBase:
             f"SELECT AssemblyId FROM Assembly WHERE Assembly='{assembly}'"
         ).fetchone()
         assembly_id = assembly_id[0] if assembly_id else assembly_id
-        assert (
-            assembly_id
-        ), f"Assembly '{assembly}' has not been added to the database yet. Before adding data you" \
-           f" should add assemblies with the DataBase.add_assembly method."
+        assert assembly_id, (
+            f"Assembly '{assembly}' has not been added to the database yet. Before "
+            f"adding data you should add assemblies with the DataBase.add_assembly "
+            f"method."
+        )
 
         # Make sure that condition 'None' exists
-        self.cursor.execute("INSERT INTO Condition(ConditionId, Condition) SELECT 0, NULL "
-                            "WHERE NOT EXISTS(SELECT * FROM Condition WHERE ConditionId = 0)")
+        self.cursor.execute(
+            "INSERT INTO Condition(ConditionId, Condition) SELECT 0, NULL "
+            "WHERE NOT EXISTS(SELECT * FROM Condition WHERE ConditionId = 0)"
+        )
 
         # get the condition id
         condition_id = self.cursor.execute(
@@ -181,15 +194,15 @@ class DataBase:
 
         # add the condition if necessary
         if condition and not condition_id:
-            self.cursor.execute(
-                f"INSERT INTO Condition VALUES(NULL, '{condition}')"
-            )
+            self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}')")
 
         bed = pybedtools.BedTool(data_path)
         lines = []
 
         # get the current BedId we are at
-        highest_id = self.cursor.execute("SELECT BedId FROM Bed ORDER BY BedId DESC LIMIT 1").fetchone()
+        highest_id = self.cursor.execute(
+            "SELECT BedId FROM Bed ORDER BY BedId DESC LIMIT 1"
+        ).fetchone()
         if not highest_id:
             highest_id = 0
         else:
@@ -198,29 +211,46 @@ class DataBase:
         for region in bed:
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
 
-            if len(region.fields) == 3 and extension == '.bed':
-                lines.append((condition_id, chromosome_id, *region.fields[1:3], None, None,
-                              None, None, None, None, None))
-            elif len(region.fields) == 10 and extension == '.narrowPeak':
+            if len(region.fields) == 3 and extension == ".bed":
+                lines.append(
+                    (
+                        condition_id,
+                        chromosome_id,
+                        *region.fields[1:3],
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    )
+                )
+            elif len(region.fields) == 10 and extension == ".narrowPeak":
                 lines.append((condition_id, chromosome_id, *region.fields[1:]))
             else:
-                fields = {'.bed': 3, '.narrowPeak': 10}
-                assert False, f"Extension {extension} should have {fields[extension]} fields, " \
-                              f"however it has {len(fields)}"
+                fields = {".bed": 3, ".narrowPeak": 10}
+                assert False, (
+                    f"Extension {extension} should have {fields[extension]} fields, "
+                    f"however it has {len(fields)}"
+                )
 
         self.cursor.executemany(
             f"""INSERT INTO Bed """
-            f"""  VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", lines
+            f"""  VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            lines,
         )
         self.conn.commit()
 
         # TODO: reformat data loading
-        # TODO: chromend and chromstart are twice in the database, once in Bed and once in
-        # BedVirtual
+        # TODO: chromend and chromstart are twice in the database, once in Bed and once
+        # in BedVirtual
         # also add each bed entry to the BedVirtual table
         for i, line in enumerate(lines):
-            sth = f"INSERT INTO BedVirtual_{assembly_id}(BedId, ChromStart, ChromEnd) "\
-                  f"VALUES({highest_id + i + 1}, {line[2]}, {line[3]})"
+            sth = (
+                f"INSERT INTO BedVirtual_{assembly_id}(BedId, ChromStart, ChromEnd) "
+                f"VALUES({highest_id + i + 1}, {line[2]}, {line[3]})"
+            )
             self.cursor.execute(sth)
 
         self.conn.commit()

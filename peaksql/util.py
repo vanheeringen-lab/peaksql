@@ -24,7 +24,7 @@ def _nuc_to_onehot_idx(nuc):
 
     # if that doesn't work try multiple-nucleotide codes
     # first set potential indexes
-    if nuc == 78:    # N
+    if nuc == 78:  # N
         idx = np.array([0, 1, 2, 3])
     elif nuc == 82:  # R
         idx = np.array([0, 2])
@@ -66,14 +66,14 @@ def sequence_to_onehot(sequence):
     """
     Convert a sequence of length n to one-hot encoding of shape (n x 4).
     """
-    return _sequence_to_onehot(str(sequence).upper().encode('utf-8'))
+    return _sequence_to_onehot(str(sequence).upper().encode("utf-8"))
 
 
 @numba.jit(nopython=True, cache=True)
 def binary_search(index, lens):
     """
-    Does a binary search to not find the value in a list, but the index where the value is in
-    between two values (returns the higher index of the two).
+    Does a binary search to not find the value in a list, but the index where the value
+    is in between two values (returns the higher index of the two).
 
     index: 5
     lens: [0, 4, 6, 8, 22]

@@ -1,4 +1,4 @@
-__version__ = '0.0.0'
+__version__ = "0.0.0"
 
 # make sure that relevant stuff is importable
 from . import database, util

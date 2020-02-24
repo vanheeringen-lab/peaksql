@@ -10,39 +10,48 @@ class _DataSet(ABC):
     """
     DataSet baseclass.
     """
+
     SELECT_CHROM_ASS = "SELECT Assembly, Chromosome "
-    def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs: int):
+
+    def __init__(
+        self, database: str, where: str = "", seq_length: int = 200, **kwargs: int
+    ):
         # check for valid input
-        if ('stride' in kwargs) == ('nr_rand_pos' in kwargs):  # xor
+        if ("stride" in kwargs) == ("nr_rand_pos" in kwargs):  # xor
             raise ValueError("choose a stride OR a number of random positions")
 
         # store general stuff
         self.database_path = database
         self.databases = dict()
         self.seq_length = seq_length
-        self.in_memory = kwargs.get('in_memory', False)
+        self.in_memory = kwargs.get("in_memory", False)
 
         # sql(ite) lookup
         self.WHERE = where
-        query = self.SELECT_CHROM_ASS + self.FROM + self.WHERE + " ORDER BY ChromosomeId"
+        query = (
+            self.SELECT_CHROM_ASS + self.FROM + self.WHERE + " ORDER BY ChromosomeId"
+        )
         self.database.cursor.execute(query)
         self.fetchall = self.database.cursor.fetchall()
 
         # get the genomic positions of our indices
         if "stride" in kwargs:
-            self.stride = kwargs['stride']
-            self.chromosomes, self.cumsum, self.positions = \
-                self.get_strided_positions(self.seq_length, self.stride)
+            self.stride = kwargs["stride"]
+            self.chromosomes, self.cumsum, self.positions = self.get_strided_positions(
+                self.seq_length, self.stride
+            )
         if "nr_rand_pos" in kwargs:
-            self.nr_rand_pos = kwargs['nr_rand_pos']
-            self.chromosomes, self.cumsum, self.positions = \
-                self.get_random_positions(self.seq_length, self.nr_rand_pos)
+            self.nr_rand_pos = kwargs["nr_rand_pos"]
+            self.chromosomes, self.cumsum, self.positions = self.get_random_positions(
+                self.seq_length, self.nr_rand_pos
+            )
 
         # get all the conditions in the database
         self.all_conditions = self.database.cursor.execute(
-            "SELECT DISTINCT ConditionId FROM Condition").fetchall()
+            "SELECT DISTINCT ConditionId FROM Condition"
+        ).fetchall()
 
-        # mark fetchall for garbage collection (can be very large and we don't need it anymore)
+        # mark fetchall for garbage collection (large and we don't need it anymore)
         del self.fetchall
 
     def __len__(self) -> int:
@@ -53,7 +62,8 @@ class _DataSet(ABC):
 
     def __getitem__(self, index: int) -> (np.array, int):
         """
-        Return the sequence in one-hot encoding and the label of the corresponding index.
+        Return the sequence in one-hot encoding and the label of the corresponding
+        index.
         """
         if index >= len(self):
             raise StopIteration
@@ -68,19 +78,22 @@ class _DataSet(ABC):
 
     def _get_process(self):
         """
-        PyFaidx is not multiprocessing safe when reading from fasta index or with sql(ite) queries.
-        However if we start a new DataBase class for each process, we automatically start new
-        sql(ite) connections and pyfaidx instances. This allows us to "stream" our data parallel in
-        e.g. a Pytorch dataloader.
+        PyFaidx is not multiprocessing safe when reading from fasta index or with
+        sql(ite) queries. However if we start a new DataBase class for each process, we
+        automatically start new sql(ite) connections and pyfaidx instances. This allows
+        us to "stream" our data parallel in e.g. a Pytorch dataloader.
         """
         process = multiprocessing.current_process().name
         if process not in self.databases:
-            self.databases[process] = DataBase(self.database_path, in_memory=self.in_memory)
+            self.databases[process] = DataBase(
+                self.database_path, in_memory=self.in_memory
+            )
         return process
 
     def _index_to_site(self, index: int) -> (str, str, int, int):
         """
-        Convert the index of self.__getitem__ to a tuple of (assembly, chrom, chromstart, chromend)
+        Convert the index of self.__getitem__ to a tuple of (assembly, chrom,
+        chromstart, chromend)
 
         Uses binary search for fast retrieval.
         """
@@ -94,21 +107,27 @@ class _DataSet(ABC):
 
     def get_strided_positions(self, seq_length: int, stride: int):
         """
-        Calculate a map that connects __getitem__ indices to (assembly, chrom, chromstart) triplet.
-        The positions are sampled accross the query with an even stride.
+        Calculate a map that connects __getitem__ indices to (assembly, chrom,
+        chromstart) triplet. The positions are sampled accross the query with an even
+        stride.
 
-        The first return value is a list of (assembly, chrom) pairs, the second list consists of
-        the cumulative sum of the number of indices that belong to this assembly, chrom pair, and
-        the third list contains all chromstarts of the sequences. This allows for a decently fast
-        and memory-efficient lookup of genomic positions corresponding to an index.
+        The first return value is a list of (assembly, chrom) pairs, the second list
+        consists of the cumulative sum of the number of indices that belong to this
+        assembly, chrom pair, and the third list contains all chromstarts of the
+        sequences. This allows for a decently fast and memory-efficient lookup of
+        genomic positions corresponding to an index.
         """
-        combis = [(None, None)] + list({(assembly, chrom) for assembly, chrom, *_ in self.fetchall})
+        combis = [(None, None)] + list(
+            {(assembly, chrom) for assembly, chrom, *_ in self.fetchall}
+        )
 
         counts = [0]
         startpos = [np.array([])]
         non_empty_combis = [(None, None)]
         for assembly, chrom in combis[1:]:
-            positions = np.arange(0, len(self.database.fastas[assembly][chrom]) - seq_length + 1, stride)
+            positions = np.arange(
+                0, len(self.database.fastas[assembly][chrom]) - seq_length + 1, stride
+            )
             if len(positions):
                 non_empty_combis.append((assembly, chrom))
                 startpos.append(positions)
@@ -120,27 +139,33 @@ class _DataSet(ABC):
 
     def get_random_positions(self, seq_length, nr_rand_pos):
         """
-        Calculate a map that connects __getitem__ indices to (assembly, chrom, chromstart) triplet.
-        The positions are sampled accross the query randomly, but proportional to the size of each
-        chromosome.
+        Calculate a map that connects __getitem__ indices to (assembly, chrom,
+        chromstart) triplet. The positions are sampled accross the query randomly, but
+        proportional to the size of each chromosome.
 
-        The first return value is a list of (assembly, chrom) pairs, the second list consists of
-        the cumulative sum of the number of indices that belong to this assembly, chrom pair, and
-        the third list contains all chromstarts of the sequences. This allows for a decently fast
-        and memory-efficient lookup of genomic positions corresponding to an index.
+        The first return value is a list of (assembly, chrom) pairs, the second list
+        consists of the cumulative sum of the number of indices that belong to this
+        assembly, chrom pair, and the third list contains all chromstarts of the
+        sequences. This allows for a decently fast and memory-efficient lookup of
+        genomic positions corresponding to an index.
         """
         # FIXME: somehow this implementation is very buggy, let's just raise error for now
         raise NotImplementedError
         combis = list({(assembly, chrom) for assembly, chrom, *_ in self.fetchall})
-        combis = [(None, None)] + [(assembly, chrom) for assembly, chrom in combis if
-                                   len(self.database.fastas[assembly][chrom]) > seq_length]
+        combis = [(None, None)] + [
+            (assembly, chrom)
+            for assembly, chrom in combis
+            if len(self.database.fastas[assembly][chrom]) > seq_length
+        ]
 
         # distribute the positions over the chromosomes
         sizes = []
         for assembly, chrom in combis[1:]:
             sizes.append(len(self.database.fastas[assembly][chrom]))
 
-        distribution = np.random.choice(range(len(sizes)), size=nr_rand_pos, p=np.array(sizes) / np.sum(sizes))
+        distribution = np.random.choice(
+            range(len(sizes)), size=nr_rand_pos, p=np.array(sizes) / np.sum(sizes)
+        )
         vals, counts = np.unique(distribution, return_counts=True)
 
         # then distribute inside a chromosome
@@ -151,16 +176,25 @@ class _DataSet(ABC):
             where = np.where(vals == i)
             if len(where[0]) > 0:
                 total_counts.append(counts[where[0][0]])
-                startpos.append(np.random.randint(0, len(self.database.fastas[assembly][chrom]) - seq_length, size=counts[where[0][0]]))
+                startpos.append(
+                    np.random.randint(
+                        0,
+                        len(self.database.fastas[assembly][chrom]) - seq_length,
+                        size=counts[where[0][0]],
+                    )
+                )
                 non_empty_combis.append((assembly, chrom))
 
         cumsum = np.cumsum(counts)
 
         return non_empty_combis, cumsum, startpos
 
-    def get_onehot_sequence(self, assembly: str, chrom: str, chromstart: int, chromend: int):
+    def get_onehot_sequence(
+        self, assembly: str, chrom: str, chromstart: int, chromend: int
+    ):
         """
-        Get the one-hot encoded sequence based on the assembly, chromosome, chromstart and chromend.
+        Get the one-hot encoded sequence based on the assembly, chromosome, chromstart
+        and chromend.
         """
         process = self._get_process()
 
@@ -183,34 +217,44 @@ class _BedDataSet(_DataSet, ABC):
     """
     The BedDataSet...
     """
-    FROM = " FROM Chromosome Chr " \
-           " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
 
-    def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs: int):
+    FROM = (
+        " FROM Chromosome Chr "
+        " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
+    )
+
+    def __init__(
+        self, database: str, where: str = "", seq_length: int = 200, **kwargs: int
+    ):
         _DataSet.__init__(self, database, where, seq_length, **kwargs)
 
-        assert 'label_func' in kwargs and \
-               kwargs['label_func'] in ['any', 'inner_any', 'all', 'inner_all',
-                                        'fraction', 'inner_fraction']
+        assert "label_func" in kwargs and kwargs["label_func"] in [
+            "any",
+            "inner_any",
+            "all",
+            "inner_all",
+            "fraction",
+            "inner_fraction",
+        ]
 
-        if 'inner' in kwargs['label_func']:
-            assert 'inner_range' in kwargs
-            self.inner_range = kwargs['inner_range']
+        if "inner" in kwargs["label_func"]:
+            assert "inner_range" in kwargs
+            self.inner_range = kwargs["inner_range"]
 
-        if 'any' in kwargs['label_func']:
-            if 'inner' in kwargs['label_func']:
+        if "any" in kwargs["label_func"]:
+            if "inner" in kwargs["label_func"]:
                 self.label_from_array = self.label_inner_any
             else:
                 self.label_from_array = self.label_any
-        if 'all' in kwargs['label_func']:
-            if 'inner' in kwargs['label_func']:
+        if "all" in kwargs["label_func"]:
+            if "inner" in kwargs["label_func"]:
                 self.label_from_array = self.label_inner_all
             else:
                 self.label_from_array = self.label_all
-        if 'fraction' in kwargs['label_func']:
-            assert 'fraction' in kwargs
-            self.fraction = kwargs['fraction']
-            if 'inner' in kwargs['label_func']:
+        if "fraction" in kwargs["label_func"]:
+            assert "fraction" in kwargs
+            self.fraction = kwargs["fraction"]
+            if "inner" in kwargs["label_func"]:
                 self.label_from_array = self.label_inner_any
             else:
                 self.label_from_array = self.label_any
@@ -220,21 +264,27 @@ class _BedDataSet(_DataSet, ABC):
 
     def label_inner_any(self, positions):
         mid = positions.shape[0] // 2
-        return self.label_any(positions[:, mid-self.inner_range:mid+self.inner_range + 1])
+        return self.label_any(
+            positions[:, mid - self.inner_range : mid + self.inner_range + 1]
+        )
 
     def label_all(self, positions):
         return np.all(positions, axis=1)
 
     def label_inner_all(self, positions):
         mid = positions.shape[0] // 2
-        return self.label_all(positions[:, mid-self.inner_range:mid+self.inner_range + 1])
+        return self.label_all(
+            positions[:, mid - self.inner_range : mid + self.inner_range + 1]
+        )
 
     def label_fraction(self, positions):
         return np.sum(positions, axis=1) / positions.shape[1] >= self.fraction
 
     def label_inner_fraction(self, positions):
         mid = positions.shape[0] // 2
-        return self.label_fraction(positions[:, mid-self.inner_range:mid+self.inner_range + 1])
+        return self.label_fraction(
+            positions[:, mid - self.inner_range : mid + self.inner_range + 1]
+        )
 
     @abstractmethod
     def array_from_query(self):
@@ -255,7 +305,9 @@ class _BedDataSet(_DataSet, ABC):
         """
         query_result = self.database.cursor.execute(query).fetchall()
 
-        positions = self.array_from_query(query_result, chromosomeid, chromstart, chromend)
+        positions = self.array_from_query(
+            query_result, chromosomeid, chromstart, chromend
+        )
         labels = self.label_from_array(positions)
 
         return labels
