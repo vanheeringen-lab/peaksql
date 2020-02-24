@@ -26,11 +26,12 @@ jobs:
        activate-environment: peaksql
        environment-file: environment.yml
        python-version: ${{ matrix.python-version }}
-       shell: bash -l {0}
+       shell: pwsh
+       auto-update-conda: true
 
     - name: Install CI related
-      shell: bash -l {0}
       run: |
+        conda list
         conda install coverage
 
     - name: Set ENV for codeclimate (pull_request)
