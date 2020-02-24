@@ -211,7 +211,7 @@ class _BedDataSet(_DataSet, ABC):
             assert 'fraction' in kwargs
             self.fraction = kwargs['fraction']
             if 'inner' in kwargs['label_func']:
-                self.label_from_array = self.label_inner_any()
+                self.label_from_array = self.label_inner_any
             else:
                 self.label_from_array = self.label_any
 
