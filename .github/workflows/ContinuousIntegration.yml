@@ -37,8 +37,7 @@ jobs:
       env:
         CC_TEST_REPORTER_ID: <code_climate_reporter_id>
       with:
-        coverageCommand: | 
-          conda init powershell
+        coverageCommand: "conda init powershell; conda activate peaksql; conda list"
 #          conda activate peaksql
 #          conda list
         debug: true
