@@ -23,16 +23,18 @@ jobs:
 
     - uses: goanpeca/setup-miniconda@v1.0.2
       with:
-       activate-environment: peaksql
-       environment-file: environment.yml
-       python-version: ${{ matrix.python-version }}
-       shell: pwsh
+#        activate-environment: peaksql
+#        environment-file: environment.yml
+#        python-version: ${{ matrix.python-version }}
+#        shell: pwsh
        auto-update-conda: true
 
     - name: Install CI related
       run: |
-        conda list
-        conda install coverage
+        conda config --add channels defaults
+        conda config --add channels bioconda
+        conda config --add channels conda-forge
+        conda install pyfaidx pybedtools numba coverage
 
     - name: Set ENV for codeclimate (pull_request)
       run: |
