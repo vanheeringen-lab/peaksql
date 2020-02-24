@@ -33,7 +33,7 @@ jobs:
         conda install coverage
     
     - name: Test & publish code coverage
-      uses: Maarten-vd-Sande/codeclimate-action
+      uses: Maarten-vd-Sande/codeclimate-action@master
       env:
         CC_TEST_REPORTER_ID: <code_climate_reporter_id>
       with:
