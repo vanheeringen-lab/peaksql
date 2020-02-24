@@ -224,30 +224,3 @@ class DataBase:
             self.cursor.execute(sth)
 
         self.conn.commit()
-
-    def create_index(self, overwrite=False):
-        """
-        Create indexes for faster queries. It is highly recommended to run this before loading data.
-        """
-        if overwrite:
-            # remove the index if exists and if we want to overwrite
-            for index in ['Bed_ChromosomeId_Chromstart_Chromend_idx',
-                        'Assembly_Assembly',
-                        'Chromosome_Chromosome_AssemblyId']:
-                self.cursor.execute(f"DROP INDEX IF EXISTS {index}")
-
-        # exit when still an index exists, since then we do not want to overwrite
-        indices = self.cursor.execute("PRAGMA INDEX_LIST('BED');").fetchall()
-        indices_flat = [item for sublist in indices for item in sublist]
-        if "Bed_ChromosomeId_Chromstart_Chromend_idx" in indices_flat:
-            return
-
-        # now add the indexes
-        self.cursor.execute("CREATE INDEX Bed_ChromosomeId_Chromstart_Chromend_idx ON "
-                            "BED (ChromosomeId, ChromStart, ChromEnd)")
-        self.cursor.execute("CREATE INDEX Assembly_Assembly ON "
-                            "Assembly (Assembly)")
-        self.cursor.execute("CREATE INDEX Chromosome_Chromosome_AssemblyId ON "
-                            "Chromosome (Chromosome, AssemblyId)")
-
-        self.conn.commit()

@@ -41,7 +41,7 @@ jobs:
     - name: Test
       shell: bash -l {0}
       run: |
-        coverage run -m unittest discover test
+        coverage run -m unittest discover -v test
         coverage xml
 
     - name: Report Code Climate code coverage  (failure)

@@ -57,4 +57,13 @@ class TestDataBase(unittest.TestCase):
         db = peaksql.DataBase(DATABASE)
         db.add_data("test/data/assembly1.bed", 'assembly1')
 
+    def test_206_in_memory(self):
+        db_file = peaksql.DataBase(DATABASE, in_memory=False)
+        db_memo = peaksql.DataBase(DATABASE, in_memory=True)
 
+        assert db_file.cursor.execute("SELECT * FROM Assembly").fetchall() == \
+               db_memo.cursor.execute("SELECT * FROM Assembly").fetchall()
+        assert db_file.cursor.execute("SELECT * FROM Chromosome").fetchall() == \
+               db_memo.cursor.execute("SELECT * FROM Chromosome").fetchall()
+        assert db_file.cursor.execute("SELECT * FROM BED").fetchall() == \
+               db_memo.cursor.execute("SELECT * FROM BED").fetchall()
