@@ -37,7 +37,7 @@ jobs:
       env:
         CC_TEST_REPORTER_ID: <code_climate_reporter_id>
       with:
-        coverageCommand: conda activate peaksql; conda list
+        coverageCommand: conda init powershell; conda activate peaksql; conda list
         debug: true
 
 #     - name: Set ENV for codeclimate (pull_request)
