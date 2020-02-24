@@ -2,14 +2,15 @@ import numpy as np
 import multiprocessing
 from abc import ABC, abstractmethod
 
-from .database import DataBase
+from ..database import DataBase
 import peaksql.util as util
 
 
-class DataSet(ABC):
+class _DataSet(ABC):
     """
     DataSet baseclass.
     """
+    SELECT_CHROM_ASS = "SELECT Assembly, Chromosome "
     def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs: int):
         # check for valid input
         if ('stride' in kwargs) == ('nr_rand_pos' in kwargs):  # xor
@@ -23,7 +24,7 @@ class DataSet(ABC):
 
         # sql(ite) lookup
         self.WHERE = where
-        query = self.SELECT + self.FROM + self.WHERE
+        query = self.SELECT_CHROM_ASS + self.FROM + self.WHERE + " ORDER BY ChromosomeId"
         self.database.cursor.execute(query)
         self.fetchall = self.database.cursor.fetchall()
 
@@ -54,6 +55,9 @@ class DataSet(ABC):
         """
         Return the sequence in one-hot encoding and the label of the corresponding index.
         """
+        if index >= len(self):
+            raise StopIteration
+
         assembly, chrom, chromstart, chromend = self._index_to_site(index)
 
         # get the sequence, label and condition
@@ -104,7 +108,7 @@ class DataSet(ABC):
         startpos = [np.array([])]
         non_empty_combis = [(None, None)]
         for assembly, chrom in combis[1:]:
-            positions = np.arange(0, len(self.database.fastas[assembly][chrom]) - seq_length - stride, stride)
+            positions = np.arange(0, len(self.database.fastas[assembly][chrom]) - seq_length + 1, stride)
             if len(positions):
                 non_empty_combis.append((assembly, chrom))
                 startpos.append(positions)
@@ -175,17 +179,66 @@ class DataSet(ABC):
         return self.databases[process]
 
 
-class BedDataSet(DataSet):
+class _BedDataSet(_DataSet, ABC):
     """
     The BedDataSet...
     """
-    SELECT = " SELECT Assembly, Chromosome, ChromStart, ChromEnd "
-    FROM = " FROM Bed " \
-           " INNER JOIN Chromosome Chr ON Bed.ChromosomeId = Chr.ChromosomeId " \
-           " INNER JOIN Assembly Ass   ON Chr.AssemblyId   = Ass.AssemblyId "
+    FROM = " FROM Chromosome Chr " \
+           " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
 
     def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs: int):
-        DataSet.__init__(self, database, where, seq_length, **kwargs)
+        _DataSet.__init__(self, database, where, seq_length, **kwargs)
+
+        assert 'label_func' in kwargs and \
+               kwargs['label_func'] in ['any', 'inner_any', 'all', 'inner_all',
+                                        'fraction', 'inner_fraction']
+
+        if 'inner' in kwargs['label_func']:
+            assert 'inner_range' in kwargs
+            self.inner_range = kwargs['inner_range']
+
+        if 'any' in kwargs['label_func']:
+            if 'inner' in kwargs['label_func']:
+                self.label_from_array = self.label_inner_any
+            else:
+                self.label_from_array = self.label_any
+        if 'all' in kwargs['label_func']:
+            if 'inner' in kwargs['label_func']:
+                self.label_from_array = self.label_inner_all
+            else:
+                self.label_from_array = self.label_all
+        if 'fraction' in kwargs['label_func']:
+            assert 'fraction' in kwargs
+            self.fraction = kwargs['fraction']
+            if 'inner' in kwargs['label_func']:
+                self.label_from_array = self.label_inner_any()
+            else:
+                self.label_from_array = self.label_any
+
+    def label_any(self, positions):
+        return np.any(positions, axis=1)
+
+    def label_inner_any(self, positions):
+        mid = positions.shape[0] // 2
+        return self.label_any(positions[:, mid-self.inner_range:mid+self.inner_range + 1])
+
+    def label_all(self, positions):
+        return np.all(positions, axis=1)
+
+    def label_inner_all(self, positions):
+        mid = positions.shape[0] // 2
+        return self.label_all(positions[:, mid-self.inner_range:mid+self.inner_range + 1])
+
+    def label_fraction(self, positions):
+        return np.sum(positions, axis=1) / positions.shape[1] >= self.fraction
+
+    def label_inner_fraction(self, positions):
+        mid = positions.shape[0] // 2
+        return self.label_fraction(positions[:, mid-self.inner_range:mid+self.inner_range + 1])
+
+    @abstractmethod
+    def array_from_query(self):
+        pass
 
     def get_label(self, assembly, chrom, chromstart, chromend):
         """
@@ -195,19 +248,14 @@ class BedDataSet(DataSet):
         chromosomeid = self.database.get_chrom_id(assemblyid, chrom)
 
         bed_virtual = f"BedVirtual_{assemblyid}"
-        self.database.cursor.execute(f"""
-            SELECT Bed.ChromosomeId, Bed.ConditionId, Bed.ChromStart, Bed.ChromEnd FROM {bed_virtual}
+        query = f"""
+            SELECT {self.SELECT_LABEL} FROM {bed_virtual}
             INNER JOIN Bed on {bed_virtual}.BedId = Bed.BedId
             WHERE ({chromstart} <= {bed_virtual}.ChromEnd) AND ({chromend} >= {bed_virtual}.ChromStart)
-        """)
-        active_conds = self.database.cursor.fetchall()
+        """
+        query_result = self.database.cursor.execute(query).fetchall()
 
-        active_conds = [active_cond[1:] for active_cond in active_conds if active_cond[0] == chromosomeid]
-        positions = np.zeros((len(self.all_conditions), chromend - chromstart), dtype=bool)
-        # FIXME: this is wrong :)
-        for condition_id, start, end in active_conds:
-            positions[condition_id, start:end] = True
-
-        labels = np.any(positions, axis=1)
+        positions = self.array_from_query(query_result, chromosomeid, chromstart, chromend)
+        labels = self.label_from_array(positions)
 
         return labels
