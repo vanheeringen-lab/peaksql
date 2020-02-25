@@ -125,3 +125,25 @@ class TestDataBase(unittest.TestCase):
         un_cumsum = dataset.cumsum - np.roll(dataset.cumsum, shift=1)
         for count in un_cumsum[1:]:
             assert 0.245 <= count / 100_000 <= 0.255
+
+    def test_313_BedDataSet_label_func_parsing(self):
+        with self.assertRaises(ValueError):
+            peaksql.BedRegionDataSet(
+                DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_any"
+            )
+        with self.assertRaises(ValueError):
+            peaksql.BedRegionDataSet(
+                DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_all"
+            )
+        with self.assertRaises(ValueError):
+            peaksql.BedRegionDataSet(
+                DATABASE_BED,
+                seq_length=10,
+                nr_rand_pos=10,
+                label_func="inner_fraction",
+                fraction=0.8,
+            )
+        with self.assertRaises(ValueError):
+            peaksql.BedRegionDataSet(
+                DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="fraction"
+            )
