@@ -12,72 +12,40 @@ jobs:
       fail-fast: false
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-    - name: Cache miniconda
-      id: cache-miniconda
-      uses: jwt27/cache@dist
+    - uses: actions/setup-python@v1
       with:
-        path: /usr/share/miniconda
-        key: ${{ runner.os }}-${{ matrix.python-version }}-hashFiles('**/environment.yml')
-
-    - name: Install miniconda
-      uses: goanpeca/setup-miniconda@v1.0.2
-      if: steps.cache-miniconda.outputs.cache-hit != 'true'
-      with:
-        activate-environment: peaksql
-        environment-file: environment.yml
         python-version: ${{ matrix.python-version }}
-        auto-update-conda: true
 
-    - name: Miniconda from cache
-      uses: goanpeca/setup-miniconda@v1.0.2
-      if: steps.cache-miniconda.outputs.cache-hit == 'true'
-      with:
-        activate-environment: peaksql
+#    - name: Get pip cache
+#       id: pip-cache
+#       run: |
+#         python -c "from pip._internal.locations import USER_CACHE_DIR; print('::set-output name=dir::' + USER_CACHE_DIR)"
+#
+#    - uses: actions/cache@v1
+#      with:
+#        path: ${{ steps.pip-cache.outputs.dir }}
+#        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
+#        restore-keys: |
+#          ${{ runner.os }}-pip-
 
-    - name: Install CI related
-      if: steps.cache-miniconda.outputs.cache-hit != 'true'
-      shell: bash -l {0}
+    - name: Install dependencies
       run: |
-        conda install coverage black flake8
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 black
+
+    - uses: paambaati/codeclimate-action@v2.2.4
+      env:
+        CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
+      with:
+        coverageCommand: coverage run -m unittest discover -v test
 
     - name: Code formatting (black)
-      shell: bash -l {0}
       run: |
         black --check peaksql/ test/
 
     - name: Code formatting (flake8)
-      shell: bash -l {0}
       run: |
         flake8 peaksql/ test/
-
-    - name: Setup Code Climate code coverage
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
-        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-        chmod +x ./cc-test-reporter
-        ./cc-test-reporter before-build
-
-    - name: Test
-      shell: bash -l {0}
-      run: |
-        coverage run -m unittest discover -v test
-        coverage xml
-
-    - name: Report Code Climate code coverage  (failure)
-      if: failure() && matrix.os == 'ubuntu-latest'
-      env:
-        CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
-      run: |
-        ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 1
-
-    - name: Report Code Climate code coverage (success)
-      if: success() && matrix.os == 'ubuntu-latest'
-      env:
-        CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
-      run: |
-        ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code 0
-
