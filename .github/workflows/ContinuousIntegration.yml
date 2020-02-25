@@ -16,14 +16,14 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Cache miniconda
-      id: miniconda
+      id: cache-miniconda
       uses: jwt27/cache@dist
       with:
         path: /usr/share/miniconda
         key: ${{ runner.os }}-${{ matrix.python-version }}-hashFiles('**/environment.yml')-primes
 
     - uses: goanpeca/setup-miniconda@v1.0.2
-      if: steps.cache-primes.outputs.cache-hit != 'true'
+      if: steps.cache-miniconda.outputs.cache-hit != 'true'
       with:
         activate-environment: peaksql
         environment-file: environment.yml
