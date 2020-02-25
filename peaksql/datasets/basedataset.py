@@ -152,7 +152,7 @@ class _DataSet(ABC):
         sequences. This allows for a decently fast and memory-efficient lookup of
         genomic positions corresponding to an index.
         """
-        # FIXME: somehow this implementation is very buggy, let's just raise error for now
+        # FIXME: this implementation is very buggy, let's just raise error for now
         raise NotImplementedError
         combis = list({(assembly, chrom) for assembly, chrom, *_ in self.fetchall})
         combis = [(None, None)] + [
@@ -251,8 +251,8 @@ class _BedDataSet(_DataSet, ABC):
         if "fraction" in kwargs["label_func"]:
             if "fraction" not in kwargs:
                 raise ValueError(
-                    f"You specified a 'fraction' of the sequence to be within a ragion, "
-                    f"but you did not not specify the fraction."
+                    f"You specified a 'fraction' of the sequence to be within a ragion,"
+                    f" but you did not not specify the fraction."
                 )
             self.fraction = kwargs["fraction"]
 
@@ -300,7 +300,8 @@ class _BedDataSet(_DataSet, ABC):
         query = f"""
             SELECT {self.SELECT_LABEL} FROM {bed_virtual}
             INNER JOIN Bed on {bed_virtual}.BedId = Bed.BedId
-            WHERE ({chromstart} <= {bed_virtual}.ChromEnd) AND ({chromend} >= {bed_virtual}.ChromStart)
+            WHERE ({chromstart} <= {bed_virtual}.ChromEnd) AND
+                  ({chromend} >= {bed_virtual}.ChromStart)
         """
         query_result = self.database.cursor.execute(query).fetchall()
 

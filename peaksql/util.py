@@ -6,10 +6,11 @@ import numpy as np
 @numba.jit(nopython=True, cache=True)
 def _nuc_to_onehot_idx(nuc):
     """
-    Convert a nucleotide to a one hot index, where the indexes 0, 1, 2, 3 respectively correspond to
-    A, C, G, T.
+    Convert a nucleotide to a one hot index, where the indexes 0, 1, 2, 3 respectively
+    correspond to A, C, G, T.
 
-    Accepts all IUPAC nucleotide codes, and picks a random option from the possible nucleotides.
+    Accepts all IUPAC nucleotide codes, and picks a random option from the possible
+    nucleotides.
     """
     # first try single-nucleotide codes
     # start with A & T, since genomes generally have higher AT content than GC content

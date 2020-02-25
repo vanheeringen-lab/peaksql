@@ -28,12 +28,17 @@ jobs:
     - name: Install CI related
       shell: bash -l {0}
       run: |
-        conda install coverage black
+        conda install coverage black flake8
 
-    - name: Code formatting
+    - name: Code formatting (black)
       shell: bash -l {0}
       run: |
         black --check peaksql/ test/
+
+    - name: Code formatting (flake8)
+      shell: bash -l {0}
+      run: |
+        flake8 --check peaksql/ test/
 
     - name: Setup Code Climate code coverage
       if: matrix.os == 'ubuntu-latest'

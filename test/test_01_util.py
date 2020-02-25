@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-import random
 
 import peaksql.util
 
@@ -131,7 +130,8 @@ class TestUtil(unittest.TestCase):
 
     def test_117_sequence_to_onehot(self):
         """
-        Test whether single-nucleotide IUPAC codes are converted correctly into one-hot encoding.
+        Test whether single-nucleotide IUPAC codes are converted correctly into one-hot
+        encoding.
         """
         sequence = "ACGTACGT"
         onehot = peaksql.util.sequence_to_onehot(sequence)
