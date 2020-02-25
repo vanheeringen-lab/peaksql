@@ -36,6 +36,10 @@ jobs:
         pip install -r requirements.txt
         pip install flake8 black
 
+    - name: test
+      run: |
+        coverage run -m unittest discover -v test
+
     - uses: paambaati/codeclimate-action@v2.5.0
       env:
         CC_TEST_REPORTER_ID: ${{ secrets.CodeClimate }}
