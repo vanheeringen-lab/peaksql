@@ -20,7 +20,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: /usr/share/miniconda
-        key: ${{ runner.os }}-${{ runner.python-version }}-primes
+        key: ${{ runner.os }}-${{ matrix.python-version }}-hashFiles('**/environment.yml')-primes
 
     - uses: goanpeca/setup-miniconda@v1.0.2
       if: steps.cache-primes.outputs.cache-hit != 'true'
