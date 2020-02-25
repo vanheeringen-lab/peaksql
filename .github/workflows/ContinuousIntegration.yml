@@ -38,7 +38,7 @@ jobs:
 
     - uses: paambaati/codeclimate-action@v2.5.0
       env:
-        CC_TEST_REPORTER_ID: ${{secrets.CodeClimate}}
+        CC_TEST_REPORTER_ID: ${{ secrets.CodeClimate }}
       with:
         coverageCommand: coverage run -m unittest discover -v test
 
@@ -49,4 +49,3 @@ jobs:
     - name: Code formatting (flake8)
       run: |
         flake8 peaksql/ test/
-
