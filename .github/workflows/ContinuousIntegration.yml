@@ -20,7 +20,7 @@ jobs:
       uses: jwt27/cache@dist
       with:
         path: /usr/share/miniconda
-        key: ${{ runner.os }}-${{ matrix.python-version }}-hashFiles('**/environment.yml')-primes
+        key: ${{ runner.os }}-${{ matrix.python-version }}-hashFiles('**/environment.yml')
 
     - name: Install miniconda
       uses: goanpeca/setup-miniconda@v1.0.2
@@ -38,7 +38,7 @@ jobs:
         activate-environment: peaksql
 
     - name: Install CI related
-      if: steps.cache-primes.outputs.cache-hit != 'true'
+      if: steps.cache-miniconda.outputs.cache-hit != 'true'
       shell: bash -l {0}
       run: |
         conda install coverage black flake8
