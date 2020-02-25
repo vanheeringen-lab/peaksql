@@ -49,3 +49,4 @@ jobs:
     - name: Code formatting (flake8)
       run: |
         flake8 peaksql/ test/
+
