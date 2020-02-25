@@ -22,13 +22,20 @@ jobs:
         path: /usr/share/miniconda
         key: ${{ runner.os }}-${{ matrix.python-version }}-hashFiles('**/environment.yml')-primes
 
-    - uses: goanpeca/setup-miniconda@v1.0.2
+    - name: Install miniconda
+      uses: goanpeca/setup-miniconda@v1.0.2
       if: steps.cache-miniconda.outputs.cache-hit != 'true'
       with:
         activate-environment: peaksql
         environment-file: environment.yml
         python-version: ${{ matrix.python-version }}
         auto-update-conda: true
+
+    - name: Miniconda from cache
+      uses: goanpeca/setup-miniconda@v1.0.2
+      if: steps.cache-miniconda.outputs.cache-hit == 'true'
+      with:
+        activate-environment: peaksql
 
     - name: Install CI related
       if: steps.cache-primes.outputs.cache-hit != 'true'
