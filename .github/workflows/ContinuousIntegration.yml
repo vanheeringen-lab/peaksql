@@ -15,25 +15,22 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v2
 
-#    - name: Cache miniconda
-#      id: miniconda
-#      uses: actions/cache@v1
-#      with:
-#        path:
-#        key: ${{ runner.os }}-${{ runner.python-version }}-primes
+    - name: Cache miniconda
+      id: miniconda
+      uses: actions/cache@v1
+      with:
+        path: /usr/share/miniconda
+        key: ${{ runner.os }}-${{ runner.python-version }}-primes
 
     - uses: goanpeca/setup-miniconda@v1.0.2
+      if: steps.cache-primes.outputs.cache-hit != 'true'
       with:
        activate-environment: peaksql
        environment-file: environment.yml
        python-version: ${{ matrix.python-version }}
 
-    - name: whatever
-      shell: bash -l {0}
-      run: |
-        which conda
-
     - name: Install CI related
+      if: steps.cache-primes.outputs.cache-hit != 'true'
       shell: bash -l {0}
       run: |
         conda install coverage black flake8
