@@ -29,10 +29,8 @@ class NarrowPeakDataSet(_BedDataSet):
 
         for chromosome_id, condition_id, start, peak in query:
             if cur_chrom_id == chromosome_id:
-                if condition_id is None:
-                    condition_idx = 0
-                else:
-                    condition_idx = self.all_conditions.index(condition_id)
+                condition_idx = self.all_conditions[condition_id]
+
                 peak_idx = start - chromstart + peak
                 if 0 <= peak_idx < positions.shape[1]:
                     positions[condition_idx, peak_idx] = True

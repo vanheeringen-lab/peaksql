@@ -29,16 +29,11 @@ class BedRegionDataSet(_BedDataSet):
 
         for chromosome_id, condition_id, start, end in query:
             if cur_chrom_id == chromosome_id:
-                if condition_id is None:
-                    condition_idx = 0
-                else:
-                    condition_idx = self.all_conditions.index(condition_id)
-                min_idx = start - chromstart if start - chromstart >= 0 else 0
-                max_idx = (
-                    end - chromstart
-                    if end - chromstart <= positions.shape[1]
-                    else positions.shape[1]
-                )
+                condition_idx = self.all_conditions[condition_id]
+
+                min_idx = max(0, start - chromstart)
+                max_idx = min(positions.shape[1], end - chromstart)
+
                 positions[condition_idx, min_idx:max_idx] = True
 
         return positions

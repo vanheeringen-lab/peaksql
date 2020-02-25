@@ -46,10 +46,13 @@ class _DataSet(ABC):
                 self.seq_length, self.nr_rand_pos
             )
 
-        # get all the conditions in the database
-        self.all_conditions = self.database.cursor.execute(
-            "SELECT DISTINCT ConditionId FROM Condition"
-        ).fetchall()
+        # get all the conditions and their id in the database
+        self.all_conditions = {
+            k: v
+            for k, v in self.database.cursor.execute(
+                "SELECT DISTINCT Condition, ConditionId FROM Condition"
+            ).fetchall()
+        }
 
         # mark fetchall for garbage collection (large and we don't need it anymore)
         del self.fetchall
