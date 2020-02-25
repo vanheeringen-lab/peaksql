@@ -153,11 +153,10 @@ class _DataSet(ABC):
         genomic positions corresponding to an index.
         """
         # FIXME: this implementation is very buggy, let's just raise error for now
-        raise NotImplementedError
         combis = list({(assembly, chrom) for assembly, chrom, *_ in self.fetchall})
         combis = [(None, None)] + [
             (assembly, chrom)
-            for assembly, chrom in combis
+            for assembly, chrom, *_ in self.fetchall
             if len(self.database.fastas[assembly][chrom]) > seq_length
         ]
 
@@ -188,7 +187,7 @@ class _DataSet(ABC):
                 )
                 non_empty_combis.append((assembly, chrom))
 
-        cumsum = np.cumsum(counts)
+        cumsum = np.cumsum(total_counts)
 
         return non_empty_combis, cumsum, startpos
 

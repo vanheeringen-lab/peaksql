@@ -1,11 +1,18 @@
 import unittest
 import sys
+import os
 
 import peaksql
 
 
 DATABASE_BED = "test_peaksql_bed.sqlite"
 DATABASE_NWP = "test_peaksql_narrowpeak.sqlite"
+
+# make sure we begin with clean environment
+if os.path.isfile(DATABASE_BED):
+    os.remove(DATABASE_BED)
+if os.path.isfile(DATABASE_NWP):
+    os.remove(DATABASE_NWP)
 
 
 class TestDataBase(unittest.TestCase):

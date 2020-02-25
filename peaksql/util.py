@@ -80,7 +80,7 @@ def binary_search(index, lens):
     lens: [0, 4, 6, 8, 22]
     returns: 2
     """
-    if index < 0 or index >= lens[-1]:
+    if index < lens[0] or index >= lens[-1]:
         raise ValueError("Invalid index")
 
     # FIXME: this can hang in infinite loop, and because of numba becomes unresponsive.

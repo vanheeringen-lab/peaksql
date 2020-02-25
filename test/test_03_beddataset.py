@@ -94,3 +94,34 @@ class TestDataBase(unittest.TestCase):
                 [[False, False, False, False, False, False, False, False, True, False]]
             )
         )
+
+    def test_310_BedRegionDataSet_random_pos_length(self):
+        dataset = peaksql.BedRegionDataSet(DATABASE_BED, seq_length=10, nr_rand_pos=20)
+        assert len(dataset) == 20
+
+    def test_311_BedRegionDataSet_random_pos_sequences(self):
+        dataset = peaksql.BedRegionDataSet(DATABASE_BED, seq_length=10, nr_rand_pos=20)
+        all_dna = [
+            "AAAACCCCGGGGTTTTAAACCCGGGTTTAACCGGTTACGT",
+            "TTTTGGGGCCCCAAAATTTGGGCCCAAATTGGCCAATGCA",
+            "ATGCGTAGCTGATCGATGCTAGCTAGCTAGCTAGCTAAAA",
+            "ATGGTGAATGTGAGTAGTGATGATGAGTGTAGTGAGGGGG",
+        ]
+        dna_onehot = [peaksql.util.sequence_to_onehot(dna) for dna in all_dna]
+        for i, (seq, label) in enumerate(dataset):
+            found = False
+            for chromosome in range(4):
+                for idx in range(0, 30):
+                    if np.all(seq == dna_onehot[chromosome][idx : idx + 10]):
+                        found = True
+            assert found
+
+    def test_312_BedRegionDataSet_random_pos_distribution(self):
+        dataset = peaksql.BedRegionDataSet(
+            DATABASE_BED, seq_length=10, nr_rand_pos=100_000
+        )
+
+        # chromosomes are of equal size, so we expect equal nr of positions for each
+        un_cumsum = dataset.cumsum - np.roll(dataset.cumsum, shift=1)
+        for count in un_cumsum[1:]:
+            assert 0.245 <= count / 100_000 <= 0.255
