@@ -238,26 +238,22 @@ class _BedDataSet(_DataSet, ABC):
         ]
 
         if "inner" in kwargs["label_func"]:
-            assert "inner_range" in kwargs
+            if "inner_range" not in kwargs:
+                raise ValueError(
+                    f"You specified an 'inner' function {kwargs['label_func']} but did "
+                    f"not specify an inner_range."
+                )
             self.inner_range = kwargs["inner_range"]
 
-        if "any" in kwargs["label_func"]:
-            if "inner" in kwargs["label_func"]:
-                self.label_from_array = self.label_inner_any
-            else:
-                self.label_from_array = self.label_any
-        if "all" in kwargs["label_func"]:
-            if "inner" in kwargs["label_func"]:
-                self.label_from_array = self.label_inner_all
-            else:
-                self.label_from_array = self.label_all
         if "fraction" in kwargs["label_func"]:
-            assert "fraction" in kwargs
+            if "fraction" not in kwargs:
+                raise ValueError(
+                    f"You specified a 'fraction' of the sequence to be within a ragion, "
+                    f"but you did not not specify the fraction."
+                )
             self.fraction = kwargs["fraction"]
-            if "inner" in kwargs["label_func"]:
-                self.label_from_array = self.label_inner_any
-            else:
-                self.label_from_array = self.label_any
+
+        setattr(self, "label_from_array", eval("self.label_" + kwargs["label_func"]))
 
     def label_any(self, positions):
         return np.any(positions, axis=1)
