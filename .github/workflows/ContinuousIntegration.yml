@@ -15,11 +15,20 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v2
 
-    - name: Cache miniconda
-      id: cache-miniconda
+    - name: Cache miniconda (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      id: cache-miniconda-linux
       uses: jwt27/cache@dist
       with:
         path: /usr/share/miniconda
+        key: ${{ runner.os }}-${{ matrix.python-version }}-hashFiles('**/environment.yml')
+
+    - name: Cache miniconda (MacOs)
+      if: matrix.os == 'macos-latest'
+      id: cache-miniconda-macos
+      uses: jwt27/cache@dist
+      with:
+        path: /usr/local/miniconda
         key: ${{ runner.os }}-${{ matrix.python-version }}-hashFiles('**/environment.yml')
 
     - name: Install miniconda
