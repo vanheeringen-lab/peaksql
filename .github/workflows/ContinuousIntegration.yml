@@ -38,7 +38,7 @@ jobs:
     - name: Code formatting (flake8)
       shell: bash -l {0}
       run: |
-        flake8 --check peaksql/ test/
+        flake8 peaksql/ test/
 
     - name: Setup Code Climate code coverage
       if: matrix.os == 'ubuntu-latest'
