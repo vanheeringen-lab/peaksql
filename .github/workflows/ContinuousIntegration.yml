@@ -25,6 +25,8 @@ jobs:
 #        pip install flake8 black coverage
     - uses: Gr1N/setup-poetry@v1
 
+    - run: poetry --version
+
     - name: Run tests
       run: |
         coverage --version
