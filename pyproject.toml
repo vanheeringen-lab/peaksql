@@ -1,4 +1,4 @@
-[tool.poetry]
+[project]
 name = "peaksql"
 version = "0.0.0"
 description = ""
@@ -10,13 +10,13 @@ maintainers = [
 ]
 repository = "https://github.com/vanheeringen-lab/peaksql"
 
-[tool.poetry.dependencies]
+[dependencies]
 python = "^3.7"
 pybedtools = "^0.8"
 numba = "^0.48"
 pyfaidx = "^0.5"
 
-[tool.poetry.dev-dependencies]
+[dev-dependencies]
 flake8 = "*"
 black = "19.10b0"
 coverage = "*"
