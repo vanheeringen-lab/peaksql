@@ -23,7 +23,7 @@ jobs:
 #        python -m pip install --upgrade pip
 #        pip install -r requirements.txt
 #        pip install flake8 black coverage
-    - uses: dschep/install-poetry-action@v1.3
+    - uses: Gr1N/setup-poetry@v1
 
     - name: Run tests
       run: |
