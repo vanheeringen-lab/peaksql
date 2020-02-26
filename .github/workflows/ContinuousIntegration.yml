@@ -24,11 +24,15 @@ jobs:
         pip install -r requirements.txt
         pip install flake8 black
 
+    - name: Run tests
+      run: |
+        coverage run -m unittest discover -v test
+
     - uses: paambaati/codeclimate-action@v2.5.2
       env:
         CC_TEST_REPORTER_ID: ${{ secrets.CodeClimate }}
       with:
-        coverageCommand: coverage run -m unittest discover -v test
+        coverageCommand: coverage xml
         debug: true
 
     - name: Code formatting (black)
