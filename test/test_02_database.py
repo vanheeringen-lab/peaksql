@@ -29,6 +29,7 @@ class TestDataBase(unittest.TestCase):
             warnings.simplefilter("ignore")
 
     def test_201_load_genomes(self):
+        assert False
         db = peaksql.DataBase(DATABASE_BED)
         db.add_assembly("test/data/assembly1.fa")
         db.add_assembly("test/data/assembly2.fa")
