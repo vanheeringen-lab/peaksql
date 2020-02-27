@@ -201,7 +201,7 @@ class DataBase:
         if condition and not condition_id:
             self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}')")
 
-        if extension in ["bed", "narrowPeak"]:
+        if extension in [".bed", ".narrowPeak"]:
             self._add_bed(data_path, assembly_id, condition_id, extension)
         elif extension in [".bw"]:
             self._add_bigwig(data_path, assembly_id, condition_id, extension)
