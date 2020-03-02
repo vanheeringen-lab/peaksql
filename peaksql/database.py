@@ -49,6 +49,12 @@ class DataBase:
             for assembly, abspath in self.cursor.fetchall()
         }
 
+        # Make sure that condition 'None' exists
+        self.cursor.execute(
+            "INSERT INTO Condition(ConditionId, Condition) SELECT 0, NULL "
+            "WHERE NOT EXISTS(SELECT * FROM Condition WHERE ConditionId = 0)"
+        )
+
     @lru_cache()
     def get_assembly_id(self, assembly_name):
         """
@@ -121,10 +127,12 @@ class DataBase:
             assembly not in self.assemblies
         ), f"Assembly '{assembly}' has already been added to the database!"
 
+        fasta = pyfaidx.Fasta(abs_path)
+        size = sum(len(seq) for seq in fasta.values())
         # add the assembly to the assembly table
         self.cursor.execute(
-            f"INSERT INTO Assembly (Assembly, Species, Abspath) "
-            f"VALUES ('{assembly}', '{species}', '{abs_path}')"
+            f"INSERT INTO Assembly (Assembly, Species, Abspath, Size) "
+            f"VALUES ('{assembly}', '{species}', '{abs_path}', {size})"
         )
         assembly_id = self.cursor.lastrowid
 
@@ -138,7 +146,6 @@ class DataBase:
         )
 
         # now fill the chromosome table
-        fasta = pyfaidx.Fasta(abs_path)
         for sequence_name, sequence in fasta.items():
             self.cursor.execute(
                 f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome) "
@@ -178,12 +185,6 @@ class DataBase:
             f"Assembly '{assembly}' has not been added to the database yet. Before "
             f"adding data you should add assemblies with the DataBase.add_assembly "
             f"method."
-        )
-
-        # Make sure that condition 'None' exists
-        self.cursor.execute(
-            "INSERT INTO Condition(ConditionId, Condition) SELECT 0, NULL "
-            "WHERE NOT EXISTS(SELECT * FROM Condition WHERE ConditionId = 0)"
         )
 
         # get the condition id

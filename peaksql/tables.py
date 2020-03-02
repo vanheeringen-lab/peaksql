@@ -7,6 +7,7 @@ ASS = (
     "    AssemblyId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    Assembly TEXT NOT NULL,"
     "    Species,"
+    "    Size INT NOT NULL,"
     "    AbsPath TEXT UNIQUE NOT NULL"
     ")"
 )
