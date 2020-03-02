@@ -174,6 +174,7 @@ class DataBase:
         assert extension in [
             ".narrowPeak",
             ".bed",
+            ".bw",
         ], f"The file extension you choose is not supported"
 
         # check if species it belongs to has already been added to the database
@@ -188,15 +189,25 @@ class DataBase:
         )
 
         # get the condition id
-        condition_id = self.cursor.execute(
-            f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
-        ).fetchone()
+        condition_id = (
+            self.cursor.execute(
+                f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
+            ).fetchone()
+            if condition
+            else (0,)
+        )
         condition_id = condition_id[0] if condition_id else None
 
         # add the condition if necessary
         if condition and not condition_id:
             self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}')")
 
+        if extension in [".bed", ".narrowPeak"]:
+            self._add_bed(data_path, assembly_id, condition_id, extension)
+        elif extension in [".bw"]:
+            self._add_bigwig(data_path, assembly_id, condition_id, extension)
+
+    def _add_bed(self, data_path, assembly_id, condition_id, extension):
         bed = pybedtools.BedTool(data_path)
         lines = []
 
@@ -254,4 +265,11 @@ class DataBase:
             )
             self.cursor.execute(sth)
 
+        self.conn.commit()
+
+    def _add_bigwig(self, data_path, assembly_id, condition_id, extension):
+        self.cursor.execute(
+            f"INSERT INTO Wig "
+            f"VALUES(NULL, '{data_path}', {condition_id}, {assembly_id})"
+        )
         self.conn.commit()

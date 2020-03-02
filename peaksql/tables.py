@@ -52,3 +52,15 @@ BED = (
     ")"
 )
 # fmt: on
+
+# BigWig table
+WIG = (
+    "Wig ("
+    "    WigID INTEGER PRIMARY KEY AUTOINCREMENT,"
+    "    AbsPath TEXT UNIQUE NOT NULL,"
+    "    ConditionId INT NOT NULL,"
+    "    AssemblyId INT NOT NULL,"
+    "    FOREIGN KEY(ConditionId) REFERENCES Condition(ConditionId),"
+    "    FOREIGN KEY(AssemblyId) REFERENCES Assembly(AssemblyId)"
+    ")"
+)
