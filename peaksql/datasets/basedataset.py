@@ -12,6 +12,10 @@ class _DataSet(ABC):
     """
 
     SELECT_CHROM_ASS = "SELECT Assembly, Chromosome "
+    FROM = (
+        " FROM Chromosome Chr "
+        " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
+    )
 
     def __init__(
         self, database: str, where: str = "", seq_length: int = 200, **kwargs: int
@@ -63,6 +67,7 @@ class _DataSet(ABC):
         """
         return self.cumsum[-1]
 
+    # @profile
     def __getitem__(self, index: int) -> (np.array, int):
         """
         Return the sequence in one-hot encoding and the label of the corresponding
@@ -219,11 +224,6 @@ class _BedDataSet(_DataSet, ABC):
     """
     The BedDataSet...
     """
-
-    FROM = (
-        " FROM Chromosome Chr "
-        " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
-    )
 
     def __init__(
         self, database: str, where: str = "", seq_length: int = 200, **kwargs: int
