@@ -18,13 +18,15 @@ class BedRegionDataSet(_BedDataSet):
         where: str = "",
         seq_length: int = 200,
         label_func: str = "any",
-        **kwargs: int
+        **kwargs
     ):
         _BedDataSet.__init__(
             self, database, where, seq_length, label_func=label_func, **kwargs
         )
 
-    def array_from_query(self, query, cur_chrom_id, chromstart, chromend):
+    def array_from_query(
+        self, query: str, cur_chrom_id: int, chromstart: int, chromend: int
+    ) -> np.ndarray:
         positions = np.zeros(
             (len(self.all_conditions), chromend - chromstart), dtype=bool
         )

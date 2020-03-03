@@ -318,7 +318,6 @@ class _BedDataSet(_DataSet, ABC):
         chromstart += offset
         chromend += offset
 
-        print("a", chromstart, chromend)
         query = f"""
             SELECT {self.SELECT_LABEL}
             FROM BedVirtual
