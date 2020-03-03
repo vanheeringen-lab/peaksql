@@ -8,7 +8,7 @@ class BedRegionDataSet(_BedDataSet):
     The BedRegion ...
     """
 
-    SELECT_LABEL = " Bed.ChromosomeId, Bed.ConditionId, Bed.ChromStart, Bed.ChromEnd "
+    SELECT_LABEL = " Bed.ChromosomeId, Bed.ConditionId "
 
     def __init__(
         self,

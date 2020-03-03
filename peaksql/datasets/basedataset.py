@@ -295,15 +295,22 @@ class _BedDataSet(_DataSet, ABC):
         assemblyid = self.database.get_assembly_id(assembly)
         chromosomeid = self.database.get_chrom_id(assemblyid, chrom)
 
-        bed_virtual = f"BedVirtual_{assemblyid}"
+        offset = self.database.cursor.execute(
+            f"""
+            SELECT Offset FROM Chromosome WHERE ChromosomeId = {chromosomeid}
+            """
+        ).fetchone()[0]
+        chromstart += offset
+        chromend += offset
+
         query = f"""
-            SELECT {self.SELECT_LABEL} FROM {bed_virtual}
-            INNER JOIN Bed on {bed_virtual}.BedId = Bed.BedId
-            WHERE ({chromstart} <= {bed_virtual}.ChromEnd) AND
-                  ({chromend} >= {bed_virtual}.ChromStart)
+            SELECT {self.SELECT_LABEL}, BedVirtual.ChromStart, BedVirtual.ChromEnd
+            FROM BedVirtual
+            INNER JOIN Bed on BedVirtual.BedId = Bed.BedId
+            WHERE ({chromstart} <= BedVirtual.ChromEnd) AND
+                  ({chromend} >= BedVirtual.ChromStart)
         """
         query_result = self.database.cursor.execute(query).fetchall()
-
         positions = self.array_from_query(
             query_result, chromosomeid, chromstart, chromend
         )
