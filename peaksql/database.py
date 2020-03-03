@@ -43,14 +43,6 @@ class DataBase:
                 f"CREATE {virtual} TABLE IF NOT EXISTS {getattr(tables, table)}"
             )
 
-        # self.cursor.execute(
-        #     f"CREATE VIRTUAL TABLE BedVirtual USING rtree("
-        #     f"    BedId INT, "  # Foreign key not implemented :(
-        #     f"    ChromStart INT, "
-        #     f"    ChromEnd INT, "
-        #     f")"
-        # )
-
         self.conn.commit()
 
         # if we are loading a pre-existing database connect to all the assemblies
@@ -59,12 +51,6 @@ class DataBase:
             assembly: pyfaidx.Fasta(abspath)
             for assembly, abspath in self.cursor.fetchall()
         }
-
-        # Make sure that condition 'None' exists
-        self.cursor.execute(
-            "INSERT INTO Condition(ConditionId, Condition) SELECT 0, NULL "
-            "WHERE NOT EXISTS(SELECT * FROM Condition WHERE ConditionId = 0)"
-        )
 
     @lru_cache()
     def get_assembly_id(self, assembly_name):
@@ -147,15 +133,6 @@ class DataBase:
         )
         assembly_id = self.cursor.lastrowid
 
-        # also add a virtual Bed table for R*Tree
-        # self.cursor.execute(
-        #     f"CREATE VIRTUAL TABLE BedVirtual_{assembly_id} USING rtree("
-        #     f"    BedId INT, "  # Foreign key not implemented
-        #     f"    ChromStart INT, "
-        #     f"    ChromEnd INT, "
-        #     f")"
-        # )
-
         # now fill the chromosome table
         offset = self.cursor.execute(
             f"SELECT SUM(Size) FROM Assembly WHERE AssemblyId < {assembly_id}"
@@ -203,6 +180,13 @@ class DataBase:
             f"Assembly '{assembly}' has not been added to the database yet. Before "
             f"adding data you should add assemblies with the DataBase.add_assembly "
             f"method."
+        )
+
+        # Make sure that condition 'None' exists
+        # This somehow locks the database when in __init__
+        self.cursor.execute(
+            "INSERT INTO Condition(ConditionId, Condition) SELECT 0, NULL "
+            "WHERE NOT EXISTS(SELECT * FROM Condition WHERE ConditionId = 0)"
         )
 
         # get the condition id
