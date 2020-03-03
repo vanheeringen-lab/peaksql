@@ -1,23 +1,8 @@
-[project]
-name = "peaksql"
-version = "0.0.0"
-description = ""
-authors = [
-    "Maarten van der Sande <maartenvandersande@hotmail.com>"
-]
-maintainers = [
-    "Maarten van der Sande <maartenvandersande@hotmail.com>"
-]
-repository = "https://github.com/vanheeringen-lab/peaksql"
+[tool.coverage]
+[tool.coverage.run]
+omit = ["test"]
 
-[dependencies]
-python = "^3.7"
-pybedtools = "^0.8"
-numba = "^0.48"
-pyfaidx = "^0.5"
+[tool.black]
 
-[dev-dependencies]
-flake8 = "*"
-black = "19.10b0"
-coverage = "*"
-pre-commit = "*"
+[mypy]
+ignore_missing_imports = true
