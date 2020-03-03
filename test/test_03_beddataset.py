@@ -73,7 +73,7 @@ class TestDataBase(unittest.TestCase):
         chromstart = 10
         chromend = 20
         chromid = 1
-        query = [[0, None, 15, 25], [1, None, 5, 13]]
+        query = [[0, 0, 15, 25], [1, 0, 5, 13]]
         dataset = peaksql.BedRegionDataSet(DATABASE_BED, seq_length=10, stride=10)
         assert np.all(
             dataset.array_from_query(query, chromid, chromstart, chromend)
@@ -82,11 +82,11 @@ class TestDataBase(unittest.TestCase):
             )
         )
 
-    def test_309_NarrowPeak_array_from_query(self):
+    def test_310_NarrowPeak_array_from_query(self):
         chromstart = 10
         chromend = 20
         chromid = 1
-        query = [[0, None, 15, 25], [1, None, 5, 13]]
+        query = [[0, 0, 15, 25], [1, 0, 5, 13]]
         dataset = peaksql.NarrowPeakDataSet(DATABASE_NWP, seq_length=10, stride=10)
         assert np.all(
             dataset.array_from_query(query, chromid, chromstart, chromend)
@@ -95,11 +95,11 @@ class TestDataBase(unittest.TestCase):
             )
         )
 
-    def test_310_BedRegionDataSet_random_pos_length(self):
+    def test_311_BedRegionDataSet_random_pos_length(self):
         dataset = peaksql.BedRegionDataSet(DATABASE_BED, seq_length=10, nr_rand_pos=20)
         assert len(dataset) == 20
 
-    def test_311_BedRegionDataSet_random_pos_sequences(self):
+    def test_312_BedRegionDataSet_random_pos_sequences(self):
         dataset = peaksql.BedRegionDataSet(DATABASE_BED, seq_length=10, nr_rand_pos=20)
         all_dna = [
             "AAAACCCCGGGGTTTTAAACCCGGGTTTAACCGGTTACGT",
@@ -116,7 +116,7 @@ class TestDataBase(unittest.TestCase):
                         found = True
             assert found
 
-    def test_312_BedRegionDataSet_random_pos_distribution(self):
+    def test_313_BedRegionDataSet_random_pos_distribution(self):
         dataset = peaksql.BedRegionDataSet(
             DATABASE_BED, seq_length=10, nr_rand_pos=100_000
         )
@@ -126,7 +126,7 @@ class TestDataBase(unittest.TestCase):
         for count in un_cumsum[1:]:
             assert 0.245 <= count / 100_000 <= 0.255
 
-    def test_313_BedDataSet_label_func_parsing(self):
+    def test_314_BedDataSet_label_func_parsing(self):
         with self.assertRaises(ValueError):
             peaksql.BedRegionDataSet(
                 DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_any"

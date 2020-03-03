@@ -38,7 +38,10 @@ class DataBase:
 
         # register all the tables (Assembly, Chromosome, Condition, Peak)
         for table in [table for table in dir(tables) if not table.startswith("__")]:
-            self.cursor.execute(f"CREATE TABLE IF NOT EXISTS {getattr(tables, table)}")
+            virtual = "VIRTUAL" if "virtual" in getattr(tables, table).lower() else ""
+            self.cursor.execute(
+                f"CREATE {virtual} TABLE IF NOT EXISTS {getattr(tables, table)}"
+            )
 
         self.conn.commit()
 
@@ -121,29 +124,27 @@ class DataBase:
             assembly not in self.assemblies
         ), f"Assembly '{assembly}' has already been added to the database!"
 
+        fasta = pyfaidx.Fasta(abs_path)
+        size = sum(len(seq) for seq in fasta.values())
         # add the assembly to the assembly table
         self.cursor.execute(
-            f"INSERT INTO Assembly (Assembly, Species, Abspath) "
-            f"VALUES ('{assembly}', '{species}', '{abs_path}')"
+            f"INSERT INTO Assembly (Assembly, Species, Abspath, Size) "
+            f"VALUES ('{assembly}', '{species}', '{abs_path}', {size})"
         )
         assembly_id = self.cursor.lastrowid
 
-        # also add a virtual Bed table for R*Tree
-        self.cursor.execute(
-            f"CREATE VIRTUAL TABLE BedVirtual_{assembly_id} USING rtree("
-            f"    BedId INT, "  # Foreign key not implemented
-            f"    ChromStart INT, "
-            f"    ChromEnd INT, "
-            f")"
-        )
-
         # now fill the chromosome table
-        fasta = pyfaidx.Fasta(abs_path)
+        offset = self.cursor.execute(
+            f"SELECT SUM(Size) FROM Assembly WHERE AssemblyId < {assembly_id}"
+        ).fetchone()[0]
+        offset = 0 if offset is None else offset
         for sequence_name, sequence in fasta.items():
+            size = len(sequence)
             self.cursor.execute(
-                f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome) "
-                f"    VALUES('{assembly_id}', '{len(sequence)}', '{sequence_name}')"
+                f"INSERT INTO Chromosome (AssemblyId, Size, Chromosome, Offset) "
+                f"    VALUES('{assembly_id}', '{size}', '{sequence_name}', '{offset}')"
             )
+            offset += size
 
         # clean up after yourself
         self.conn.commit()
@@ -167,6 +168,7 @@ class DataBase:
         assert extension in [
             ".narrowPeak",
             ".bed",
+            ".bw",
         ], f"The file extension you choose is not supported"
 
         # check if species it belongs to has already been added to the database
@@ -181,23 +183,35 @@ class DataBase:
         )
 
         # Make sure that condition 'None' exists
+        # This somehow locks the database when in __init__
         self.cursor.execute(
             "INSERT INTO Condition(ConditionId, Condition) SELECT 0, NULL "
             "WHERE NOT EXISTS(SELECT * FROM Condition WHERE ConditionId = 0)"
         )
 
         # get the condition id
-        condition_id = self.cursor.execute(
-            f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
-        ).fetchone()
+        condition_id = (
+            self.cursor.execute(
+                f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
+            ).fetchone()
+            if condition
+            else (0,)
+        )
         condition_id = condition_id[0] if condition_id else None
 
         # add the condition if necessary
         if condition and not condition_id:
             self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}')")
 
+        if extension in [".bed", ".narrowPeak"]:
+            self._add_bed(data_path, assembly_id, condition_id, extension)
+        elif extension in [".bw"]:
+            self._add_bigwig(data_path, assembly_id, condition_id, extension)
+
+    def _add_bed(self, data_path, assembly_id, condition_id, extension):
         bed = pybedtools.BedTool(data_path)
-        lines = []
+        bed_lines = []
+        virt_lines = []
 
         # get the current BedId we are at
         highest_id = self.cursor.execute(
@@ -208,26 +222,22 @@ class DataBase:
         else:
             highest_id = highest_id[0]
 
-        for region in bed:
+        for i, region in enumerate(bed):
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
+            offset = self.cursor.execute(
+                f"SELECT Offset FROM Chromosome "
+                f"WHERE ChromosomeId = {chromosome_id}"
+            ).fetchone()[0]
+
+            chromstart, chromend = region.fields[1:3]
+            chromstart = int(chromstart) + offset
+            chromend = int(chromend) + offset
+            virt_lines.append((i + 1 + highest_id, chromstart, chromend))
 
             if len(region.fields) == 3 and extension == ".bed":
-                lines.append(
-                    (
-                        condition_id,
-                        chromosome_id,
-                        *region.fields[1:3],
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    )
-                )
+                bed_lines.append((condition_id, chromosome_id, None))
             elif len(region.fields) == 10 and extension == ".narrowPeak":
-                lines.append((condition_id, chromosome_id, *region.fields[1:]))
+                bed_lines.append((condition_id, chromosome_id, region.fields[9]))
             else:
                 fields = {".bed": 3, ".narrowPeak": 10}
                 assert False, (
@@ -236,21 +246,23 @@ class DataBase:
                 )
 
         self.cursor.executemany(
-            f"""INSERT INTO Bed """
-            f"""  VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            lines,
+            f"""INSERT INTO Bed """ f"""  VALUES(NULL, ?, ?, ?)""", bed_lines
         )
-        self.conn.commit()
 
-        # TODO: reformat data loading
-        # TODO: chromend and chromstart are twice in the database, once in Bed and once
-        # in BedVirtual
         # also add each bed entry to the BedVirtual table
-        for i, line in enumerate(lines):
-            sth = (
-                f"INSERT INTO BedVirtual_{assembly_id}(BedId, ChromStart, ChromEnd) "
-                f"VALUES({highest_id + i + 1}, {line[2]}, {line[3]})"
-            )
-            self.cursor.execute(sth)
+        self.cursor.executemany(
+            f"""INSERT INTO BedVirtual(BedId, ChromStart, ChromEnd) """
+            f"""  VALUES(?, ?, ?)""",
+            virt_lines,
+        )
+        # for i, line in enumerate(lines):
+        #     sth = (
+        #         f"INSERT INTO BedVirtual(BedId, ChromStart, ChromEnd) "
+        #         f"VALUES({highest_id + i + 1}, {line[2]}, {line[3]})"
+        #     )
+        #     self.cursor.execute(sth)
 
         self.conn.commit()
+
+    def _add_bigwig(self, data_path, assembly_id, condition_id, extension):
+        raise NotImplementedError
