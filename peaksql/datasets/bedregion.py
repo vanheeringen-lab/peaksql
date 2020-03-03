@@ -1,4 +1,5 @@
 import numpy as np
+from typing import List, Tuple
 
 from .basedataset import _BedDataSet
 
@@ -25,7 +26,11 @@ class BedRegionDataSet(_BedDataSet):
         )
 
     def array_from_query(
-        self, query: str, cur_chrom_id: int, chromstart: int, chromend: int
+        self,
+        query: List[Tuple[int, int, int, int]],
+        cur_chrom_id: int,
+        chromstart: int,
+        chromend: int,
     ) -> np.ndarray:
         positions = np.zeros(
             (len(self.all_conditions), chromend - chromstart), dtype=bool

@@ -1,7 +1,7 @@
 import numpy as np
 import multiprocessing
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from ..database import DataBase
 import peaksql.util as util
@@ -294,7 +294,11 @@ class _BedDataSet(_DataSet, ABC):
 
     @abstractmethod
     def array_from_query(
-        self, query: str, cur_chrom_id: int, chromstart: int, chromend: int
+        self,
+        query: List[Tuple[int, int, int, int]],
+        cur_chrom_id: int,
+        chromstart: int,
+        chromend: int,
     ) -> np.ndarray:
         pass
 
