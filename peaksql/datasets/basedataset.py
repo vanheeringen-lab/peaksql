@@ -1,6 +1,7 @@
 import numpy as np
 import multiprocessing
 from abc import ABC, abstractmethod
+from typing import Dict, Tuple
 
 from ..database import DataBase
 import peaksql.util as util
@@ -12,6 +13,7 @@ class _DataSet(ABC):
     """
 
     SELECT_CHROM_ASS = "SELECT Assembly, Chromosome "
+    FROM: str
 
     def __init__(
         self, database: str, where: str = "", seq_length: int = 200, **kwargs: int
@@ -22,7 +24,7 @@ class _DataSet(ABC):
 
         # store general stuff
         self.database_path = database
-        self.databases = dict()
+        self.databases: Dict[str, DataBase] = dict()
         self.seq_length = seq_length
         self.in_memory = kwargs.get("in_memory", False)
 
@@ -63,7 +65,7 @@ class _DataSet(ABC):
         """
         return self.cumsum[-1]
 
-    def __getitem__(self, index: int) -> (np.array, int):
+    def __getitem__(self, index: int) -> Tuple[np.array, int]:
         """
         Return the sequence in one-hot encoding and the label of the corresponding
         index.
@@ -93,7 +95,7 @@ class _DataSet(ABC):
             )
         return process
 
-    def _index_to_site(self, index: int) -> (str, str, int, int):
+    def _index_to_site(self, index: int) -> Tuple[str, str, int, int]:
         """
         Convert the index of self.__getitem__ to a tuple of (assembly, chrom,
         chromstart, chromend)
@@ -206,7 +208,7 @@ class _DataSet(ABC):
         return seq
 
     @abstractmethod
-    def get_label(self):
+    def get_label(self, *args):
         pass
 
     @property
@@ -225,9 +227,7 @@ class _BedDataSet(_DataSet, ABC):
         " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
     )
 
-    def __init__(
-        self, database: str, where: str = "", seq_length: int = 200, **kwargs: int
-    ):
+    def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs):
         _DataSet.__init__(self, database, where, seq_length, **kwargs)
 
         assert "label_func" in kwargs and kwargs["label_func"] in [
