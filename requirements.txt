@@ -1,3 +1,4 @@
 pyfaidx
 pybedtools
+pybigwig
 numba

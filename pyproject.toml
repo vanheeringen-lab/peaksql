@@ -1,0 +1,8 @@
+[tool.coverage]
+[tool.coverage.run]
+omit = ["test"]
+
+[tool.black]
+
+[mypy]
+ignore_missing_imports = true
