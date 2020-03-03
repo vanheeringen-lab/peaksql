@@ -4,7 +4,7 @@ import numpy as np
 
 
 @numba.jit(nopython=True, cache=True)
-def _nuc_to_onehot_idx(nuc):
+def _nuc_to_onehot_idx(nuc: int) -> int:
     """
     Convert a nucleotide to a one hot index, where the indexes 0, 1, 2, 3 respectively
     correspond to A, C, G, T.
@@ -55,7 +55,7 @@ def _nuc_to_onehot_idx(nuc):
 
 
 @numba.jit(nopython=True, cache=True)
-def _sequence_to_onehot(sequence):
+def _sequence_to_onehot(sequence: np.ndarray) -> np.ndarray:
     onehot = np.zeros((len(sequence), 4), dtype=numba.boolean)
     for i, nuc in enumerate(sequence):
         onehot[i, _nuc_to_onehot_idx(nuc)] = True
@@ -63,7 +63,7 @@ def _sequence_to_onehot(sequence):
     return onehot
 
 
-def sequence_to_onehot(sequence):
+def sequence_to_onehot(sequence) -> np.ndarray:
     """
     Convert a sequence of length n to one-hot encoding of shape (n x 4).
     """
@@ -71,7 +71,7 @@ def sequence_to_onehot(sequence):
 
 
 @numba.jit(nopython=True, cache=True)
-def binary_search(index, lens):
+def binary_search(index: int, lens: np.ndarray) -> int:
     """
     Does a binary search to not find the value in a list, but the index where the value
     is in between two values (returns the higher index of the two).

@@ -1,6 +1,7 @@
 import numpy as np
 import multiprocessing
 from abc import ABC, abstractmethod
+from typing import Dict, Tuple
 
 from ..database import DataBase
 import peaksql.util as util
@@ -17,16 +18,14 @@ class _DataSet(ABC):
         " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
     )
 
-    def __init__(
-        self, database: str, where: str = "", seq_length: int = 200, **kwargs: int
-    ):
+    def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs):
         # check for valid input
         if ("stride" in kwargs) == ("nr_rand_pos" in kwargs):  # xor
             raise ValueError("choose a stride OR a number of random positions")
 
         # store general stuff
         self.database_path = database
-        self.databases = dict()
+        self.databases: Dict[str, DataBase] = dict()
         self.seq_length = seq_length
         self.in_memory = kwargs.get("in_memory", False)
 
@@ -67,8 +66,7 @@ class _DataSet(ABC):
         """
         return self.cumsum[-1]
 
-    # @profile
-    def __getitem__(self, index: int) -> (np.array, int):
+    def __getitem__(self, index: int) -> Tuple[np.array, int]:
         """
         Return the sequence in one-hot encoding and the label of the corresponding
         index.
@@ -84,7 +82,7 @@ class _DataSet(ABC):
 
         return seq, label
 
-    def _get_process(self):
+    def _get_process(self) -> str:
         """
         PyFaidx is not multiprocessing safe when reading from fasta index or with
         sql(ite) queries. However if we start a new DataBase class for each process, we
@@ -98,7 +96,7 @@ class _DataSet(ABC):
             )
         return process
 
-    def _index_to_site(self, index: int) -> (str, str, int, int):
+    def _index_to_site(self, index: int) -> Tuple[str, str, int, int]:
         """
         Convert the index of self.__getitem__ to a tuple of (assembly, chrom,
         chromstart, chromend)
@@ -113,7 +111,9 @@ class _DataSet(ABC):
 
         return assembly, chrom, chromstart, chromend
 
-    def get_strided_positions(self, seq_length: int, stride: int):
+    def get_strided_positions(
+        self, seq_length: int, stride: int
+    ) -> Tuple[list, np.ndarray, np.ndarray]:
         """
         Calculate a map that connects __getitem__ indices to (assembly, chrom,
         chromstart) triplet. The positions are sampled accross the query with an even
@@ -145,7 +145,9 @@ class _DataSet(ABC):
 
         return non_empty_combis, cumsum, startpos
 
-    def get_random_positions(self, seq_length, nr_rand_pos):
+    def get_random_positions(
+        self, seq_length: int, nr_rand_pos: int
+    ) -> Tuple[list, np.ndarray, np.ndarray]:
         """
         Calculate a map that connects __getitem__ indices to (assembly, chrom,
         chromstart) triplet. The positions are sampled accross the query randomly, but
@@ -198,7 +200,7 @@ class _DataSet(ABC):
 
     def get_onehot_sequence(
         self, assembly: str, chrom: str, chromstart: int, chromend: int
-    ):
+    ) -> np.ndarray:
         """
         Get the one-hot encoded sequence based on the assembly, chromosome, chromstart
         and chromend.
@@ -211,7 +213,9 @@ class _DataSet(ABC):
         return seq
 
     @abstractmethod
-    def get_label(self):
+    def get_label(
+        self, assembly: str, chrom: str, chromstart: int, chromend: int
+    ) -> np.ndarray:
         pass
 
     @property
@@ -225,9 +229,13 @@ class _BedDataSet(_DataSet, ABC):
     The BedDataSet...
     """
 
-    def __init__(
-        self, database: str, where: str = "", seq_length: int = 200, **kwargs: int
-    ):
+    FROM = (
+        " FROM Chromosome Chr "
+        " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
+    )
+    SELECT_LABEL: str
+
+    def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs):
         _DataSet.__init__(self, database, where, seq_length, **kwargs)
 
         assert "label_func" in kwargs and kwargs["label_func"] in [
@@ -257,38 +265,45 @@ class _BedDataSet(_DataSet, ABC):
 
         setattr(self, "label_from_array", eval("self.label_" + kwargs["label_func"]))
 
-    def label_any(self, positions):
+    def label_any(self, positions: np.ndarray) -> np.ndarray:
         return np.any(positions, axis=1)
 
-    def label_inner_any(self, positions):
+    def label_inner_any(self, positions: np.ndarray) -> np.ndarray:
         mid = positions.shape[0] // 2
         return self.label_any(
             positions[:, mid - self.inner_range : mid + self.inner_range + 1]
         )
 
-    def label_all(self, positions):
+    def label_all(self, positions: np.ndarray) -> np.ndarray:
         return np.all(positions, axis=1)
 
-    def label_inner_all(self, positions):
+    def label_inner_all(self, positions: np.ndarray) -> np.ndarray:
         mid = positions.shape[0] // 2
         return self.label_all(
             positions[:, mid - self.inner_range : mid + self.inner_range + 1]
         )
 
-    def label_fraction(self, positions):
+    def label_fraction(self, positions: np.ndarray) -> np.ndarray:
         return np.sum(positions, axis=1) / positions.shape[1] >= self.fraction
 
-    def label_inner_fraction(self, positions):
+    def label_inner_fraction(self, positions: np.ndarray) -> np.ndarray:
         mid = positions.shape[0] // 2
         return self.label_fraction(
             positions[:, mid - self.inner_range : mid + self.inner_range + 1]
         )
 
     @abstractmethod
-    def array_from_query(self):
+    def array_from_query(
+        self, query: str, cur_chrom_id: int, chromstart: int, chromend: int
+    ) -> np.ndarray:
         pass
 
-    def get_label(self, assembly, chrom, chromstart, chromend):
+    def label_from_array(self, positions: np.ndarray) -> np.ndarray:
+        raise NotImplementedError
+
+    def get_label(
+        self, assembly: str, chrom: str, chromstart: int, chromend: int
+    ) -> np.ndarray:
         """
         Get the label that corresponds to chromstart:chromend.
         """

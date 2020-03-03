@@ -53,7 +53,7 @@ class DataBase:
         }
 
     @lru_cache()
-    def get_assembly_id(self, assembly_name):
+    def get_assembly_id(self, assembly_name: str) -> int:
         """
         Quickly get the AssemblyId based on Assembly (name).
         """
@@ -67,7 +67,7 @@ class DataBase:
         raise ValueError(f"Assembly {assembly_name} is not present in the database")
 
     @lru_cache(maxsize=2 ** 16)
-    def get_chrom_id(self, assembly_id, chrom_name):
+    def get_chrom_id(self, assembly_id: int, chrom_name: str) -> int:
         """
         Quickly get the ChromosomeId based on assemblyId and Chromosome (name).
         """
