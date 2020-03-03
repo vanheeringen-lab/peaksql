@@ -1,10 +1,11 @@
 import numpy as np
+from abc import ABC
 from typing import List, Tuple
 
-from .basedataset import _BedDataSet
+from .bed import _BedDataSet
 
 
-class BedRegionDataSet(_BedDataSet):
+class BedRegionDataSet(_BedDataSet, ABC):
     """
     The BedRegion ...
     """
