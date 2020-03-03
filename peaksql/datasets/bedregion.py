@@ -8,7 +8,9 @@ class BedRegionDataSet(_BedDataSet):
     The BedRegion ...
     """
 
-    SELECT_LABEL = " Bed.ChromosomeId, Bed.ConditionId "
+    SELECT_LABEL = (
+        " Bed.ChromosomeId, Bed.ConditionId, BedVirtual.ChromStart, BedVirtual.ChromEnd"
+    )
 
     def __init__(
         self,
@@ -29,8 +31,8 @@ class BedRegionDataSet(_BedDataSet):
 
         for chromosome_id, condition_id, start, end in query:
             if cur_chrom_id == chromosome_id:
-                min_idx = max(0, start - chromstart)
-                max_idx = min(positions.shape[1], end - chromstart)
+                min_idx = max(0, int(start - chromstart))
+                max_idx = min(positions.shape[1], int(end - chromstart))
 
                 positions[condition_id, min_idx:max_idx] = True
 

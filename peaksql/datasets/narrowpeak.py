@@ -8,7 +8,7 @@ class NarrowPeakDataSet(_BedDataSet):
     The NarrowPeakDataSet ...
     """
 
-    SELECT_LABEL = " Bed.ChromosomeId, Bed.ConditionId, Bed.ChromStart, Bed.Peak "
+    SELECT_LABEL = " Bed.ChromosomeId, Bed.ConditionId, BedVirtual.ChromStart, Bed.Peak"
 
     def __init__(
         self,

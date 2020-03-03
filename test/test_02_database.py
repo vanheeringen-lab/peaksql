@@ -54,11 +54,15 @@ class TestDataBase(unittest.TestCase):
         db = peaksql.DataBase(DATABASE_BED)
         db.add_data("test/data/assembly1.bed", "assembly1")
         db.add_data("test/data/assembly2.bed", "assembly2")
-        assert db.cursor.execute("SELECT COUNT(BedId) FROM BED").fetchone() == (3,)
+        assert db.cursor.execute("SELECT COUNT(BedId) FROM Bed").fetchone() == (3,)
+        assert db.cursor.execute("SELECT COUNT(BedId) FROM BedVirtual").fetchone() == (
+            3,
+        )
         assert db.cursor.execute(
-            "SELECT Chromosome, ChromStart, ChromEnd "
+            "SELECT Chromosome, ChromStart - Offset, ChromEnd - Offset "
             "FROM BED B "
             "JOIN Chromosome C on B.ChromosomeId = C.ChromosomeId "
+            "JOIN BedVirtual BV on BV.BedId = B.BedId "
             "JOIN Assembly A on C.AssemblyId = A.AssemblyId "
             "WHERE Assembly='assembly2' and Chromosome='chr1'"
         ).fetchall() == [("chr1", 20, 40)]

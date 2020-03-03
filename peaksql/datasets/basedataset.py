@@ -303,8 +303,9 @@ class _BedDataSet(_DataSet, ABC):
         chromstart += offset
         chromend += offset
 
+        print("a", chromstart, chromend)
         query = f"""
-            SELECT {self.SELECT_LABEL}, BedVirtual.ChromStart, BedVirtual.ChromEnd
+            SELECT {self.SELECT_LABEL}
             FROM BedVirtual
             INNER JOIN Bed on BedVirtual.BedId = Bed.BedId
             WHERE ({chromstart} <= BedVirtual.ChromEnd) AND

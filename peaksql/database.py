@@ -224,17 +224,14 @@ class DataBase:
 
         for i, region in enumerate(bed):
             chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
-            offset = str(
-                self.cursor.execute(
-                    f"SELECT Offset FROM Chromosome "
-                    f"WHERE ChromosomeId = {chromosome_id}"
-                ).fetchone()[0]
-            )
-            print(offset)
+            offset = self.cursor.execute(
+                f"SELECT Offset FROM Chromosome "
+                f"WHERE ChromosomeId = {chromosome_id}"
+            ).fetchone()[0]
 
             chromstart, chromend = region.fields[1:3]
-            chromstart += offset
-            chromend += offset
+            chromstart = int(chromstart) + offset
+            chromend = int(chromend) + offset
             virt_lines.append((i + 1 + highest_id, chromstart, chromend))
 
             if len(region.fields) == 3 and extension == ".bed":
