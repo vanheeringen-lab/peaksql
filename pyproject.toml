@@ -3,14 +3,4 @@
 omit = ["test"]
 
 [mypy]
-["mypy-numpy.*"]
-ignore_missing_imports = true
-
-["mypy-numba.*"]
-ignore_missing_imports = true
-
-["mypy-pybedtools.*"]
-ignore_missing_imports = true
-
-["mypy-pyfaidx.*"]
 ignore_missing_imports = true
