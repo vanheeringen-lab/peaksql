@@ -26,7 +26,6 @@ jobs:
 
     - name: Run tests
       run: |
-        coverage --version
         coverage run -m unittest discover -v test
 
     - uses: paambaati/codeclimate-action@v2.5.3
@@ -35,7 +34,6 @@ jobs:
         CC_TEST_REPORTER_ID: ${{ secrets.CodeClimate }}
       with:
         coverageCommand: coverage xml
-        debug: true
 
     - name: Code formatting (black)
       if: always()
