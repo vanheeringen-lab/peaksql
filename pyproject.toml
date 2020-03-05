@@ -3,8 +3,7 @@ name = "peaksql"
 version = "0.0.0"
 description = "TODO: add peaksq description"
 author = [
-    "Maarten van der Sande <maartenvandersande@hotmail.com>"
-]
+    "Maarten van der Sande <maartenvandersande@hotmail.com>"]
 license = "MIT"
 url= "https://github.com/vanheeringen-lab/peaksql"
 
@@ -17,8 +16,7 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Topic :: Scientific/Engineering :: Bio-Informatics"
-]
+    "Topic :: Scientific/Engineering :: Bio-Informatics"]
 
 install_requires = ["pyfaidx", "pybedtools", "pybigwig", "numba"]
 
