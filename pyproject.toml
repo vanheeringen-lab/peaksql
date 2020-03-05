@@ -1,7 +1,7 @@
 [project]
 name = "peaksql"
 packages = ["peaksql", "peaksql/datasets"]
-version = "0.0.1"
+version = "0.0.2"
 description = "TODO: add peaksq description"
 author = [
     "Maarten van der Sande <maartenvandersande@hotmail.com>"]
