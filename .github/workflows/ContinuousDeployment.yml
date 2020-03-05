@@ -1,10 +1,8 @@
 name: ContinuousDeployment
 
-# on push events to master, tagged with a version number
+# on push events tagged with a version number
 on:
   push:
-    branches:
-      - master
     tags:
       - 'v*' # 
 
