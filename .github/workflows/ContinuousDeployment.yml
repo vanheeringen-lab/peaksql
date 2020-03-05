@@ -48,6 +48,15 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
 
-    - name: "upload to PyPi test :snake:"
-      run:
-        twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p ${{ secrets.PyPi_test }}
+    - name: Publish package to Test-PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PyPi_test }}
+        repository_url: https://test.pypi.org/legacy/
+
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PyPi }}
