@@ -3,4 +3,6 @@
 *.sqlite
 .idea/
 .mypy_cache/
+dist/
+*.egg-info/
 __pycache__
