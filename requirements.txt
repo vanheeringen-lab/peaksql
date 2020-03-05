@@ -1,4 +1,0 @@
-pyfaidx
-pybedtools
-pybigwig
-numba
