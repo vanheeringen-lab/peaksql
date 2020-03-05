@@ -24,6 +24,6 @@ jobs:
       run: |
         coverage run -m unittest discover -v test
 
-    - name: upload to PyPi test :snake:
+    - name: "upload to PyPi test :snake:"
       run:
         twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p ${{ secrets.1PyPi_test }}
