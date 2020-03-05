@@ -1,7 +1,12 @@
 name: ContinuousDeployment
 
-# TODO branch master (git tag?)
-on: [push]
+# on push events to master, tagged with a version number
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*' # 
 
 jobs:
   build:
