@@ -245,22 +245,12 @@ class DataBase:
                     f"however it has {len(fields)}"
                 )
 
-        self.cursor.executemany(
-            f"""INSERT INTO Bed """ f"""  VALUES(NULL, ?, ?, ?)""", bed_lines
-        )
+        self.cursor.executemany(f"INSERT INTO Bed VALUES(NULL, ?, ?, ?)", bed_lines)
 
         # also add each bed entry to the BedVirtual table
         self.cursor.executemany(
-            f"""INSERT INTO BedVirtual(BedId, ChromStart, ChromEnd) """
-            f"""  VALUES(?, ?, ?)""",
-            virt_lines,
+            f"INSERT INTO BedVirtual VALUES(?, ?, ?)", virt_lines,
         )
-        # for i, line in enumerate(lines):
-        #     sth = (
-        #         f"INSERT INTO BedVirtual(BedId, ChromStart, ChromEnd) "
-        #         f"VALUES({highest_id + i + 1}, {line[2]}, {line[3]})"
-        #     )
-        #     self.cursor.execute(sth)
 
         self.conn.commit()
 
