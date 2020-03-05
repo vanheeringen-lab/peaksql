@@ -1,5 +1,6 @@
 import numpy as np
 import multiprocessing
+import threading
 from abc import ABC, abstractmethod
 from typing import Dict, Tuple
 
@@ -89,7 +90,9 @@ class _DataSet(ABC):
         automatically start new sql(ite) connections and pyfaidx instances. This allows
         us to "stream" our data parallel in e.g. a Pytorch dataloader.
         """
-        process = multiprocessing.current_process().name
+        process = multiprocessing.current_process().name + str(
+            threading.current_thread().ident
+        )
         if process not in self.databases:
             self.databases[process] = DataBase(
                 self.database_path, in_memory=self.in_memory
