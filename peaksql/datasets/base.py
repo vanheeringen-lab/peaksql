@@ -84,19 +84,6 @@ class _DataSet(ABC):
 
         return seq, label
 
-    # def __next__(self):
-    #     """
-    #
-    #     """
-    #     try:
-    #         val = self[self.iter_index]
-    #     except StopIteration:
-    #         self.iter_index = 0
-    #         raise StopIteration
-    #     finally:
-    #         self.iter_index += 1
-    #         return val
-
     def _get_process(self) -> str:
         """
         PyFaidx is not multiprocessing safe when reading from fasta index or with
