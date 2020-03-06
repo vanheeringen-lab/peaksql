@@ -19,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Bio-Informatics"]
 
-install_requires = ["pyfaidx", "pybedtools", "pybigwig", "numba"]
+install_requires = ["pyfaidx", "pybedtools", "numba"]
 python_requires = ">3.7"
 
 [build-system]
