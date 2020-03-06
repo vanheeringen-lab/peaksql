@@ -5,7 +5,6 @@ import sqlite3
 import os
 from functools import lru_cache
 
-import pybedtools
 import pyfaidx
 
 import peaksql.tables as tables
@@ -209,7 +208,6 @@ class DataBase:
             self._add_bigwig(data_path, assembly_id, condition_id, extension)
 
     def _add_bed(self, data_path, assembly_id, condition_id, extension):
-        bed = pybedtools.BedTool(data_path)
         bed_lines = []
         virt_lines = []
 
@@ -222,28 +220,31 @@ class DataBase:
         else:
             highest_id = highest_id[0]
 
-        for i, region in enumerate(bed):
-            chromosome_id = self.get_chrom_id(assembly_id, region.chrom)
-            offset = self.cursor.execute(
-                f"SELECT Offset FROM Chromosome "
-                f"WHERE ChromosomeId = {chromosome_id}"
-            ).fetchone()[0]
+        with open(data_path) as bedfile:
+            for i, line in enumerate(bedfile):
+                bed = line.strip().split("\t")
+                # print(bed)
+                chromosome_id = self.get_chrom_id(assembly_id, bed[0])
+                offset = self.cursor.execute(
+                    f"SELECT Offset FROM Chromosome "
+                    f"WHERE ChromosomeId = {chromosome_id}"
+                ).fetchone()[0]
 
-            chromstart, chromend = region.fields[1:3]
-            chromstart = int(chromstart) + offset
-            chromend = int(chromend) + offset
-            virt_lines.append((i + 1 + highest_id, chromstart, chromend))
+                chromstart, chromend = bed[1:3]
+                chromstart = int(chromstart) + offset
+                chromend = int(chromend) + offset
+                virt_lines.append((i + 1 + highest_id, chromstart, chromend))
 
-            if len(region.fields) == 3 and extension == ".bed":
-                bed_lines.append((condition_id, chromosome_id, None))
-            elif len(region.fields) == 10 and extension == ".narrowPeak":
-                bed_lines.append((condition_id, chromosome_id, region.fields[9]))
-            else:
-                fields = {".bed": 3, ".narrowPeak": 10}
-                assert False, (
-                    f"Extension {extension} should have {fields[extension]} fields, "
-                    f"however it has {len(fields)}"
-                )
+                if len(bed) == 3 and extension == ".bed":
+                    bed_lines.append((condition_id, chromosome_id, None))
+                elif len(bed) == 10 and extension == ".narrowPeak":
+                    bed_lines.append((condition_id, chromosome_id, bed[9]))
+                else:
+                    fields = {".bed": 3, ".narrowPeak": 10}
+                    assert False, (
+                        f"Extension {extension} should have {fields[extension]} fields,"
+                        f" however it has {len(fields)}"
+                    )
 
         self.cursor.executemany(f"INSERT INTO Bed VALUES(NULL, ?, ?, ?)", bed_lines)
 

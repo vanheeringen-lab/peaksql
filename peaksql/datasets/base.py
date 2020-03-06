@@ -1,5 +1,6 @@
 import numpy as np
 import multiprocessing
+import threading
 from abc import ABC, abstractmethod
 from typing import Dict, Tuple
 
@@ -28,6 +29,7 @@ class _DataSet(ABC):
         self.databases: Dict[str, DataBase] = dict()
         self.seq_length = seq_length
         self.in_memory = kwargs.get("in_memory", False)
+        self.iter_index = 0
 
         # sql(ite) lookup
         self.WHERE = where
@@ -89,7 +91,9 @@ class _DataSet(ABC):
         automatically start new sql(ite) connections and pyfaidx instances. This allows
         us to "stream" our data parallel in e.g. a Pytorch dataloader.
         """
-        process = multiprocessing.current_process().name
+        process = multiprocessing.current_process().name + str(
+            threading.current_thread().ident
+        )
         if process not in self.databases:
             self.databases[process] = DataBase(
                 self.database_path, in_memory=self.in_memory
@@ -159,8 +163,6 @@ class _DataSet(ABC):
         sequences. This allows for a decently fast and memory-efficient lookup of
         genomic positions corresponding to an index.
         """
-        # FIXME: this implementation is very buggy, let's just raise error for now
-        combis = list({(assembly, chrom) for assembly, chrom, *_ in self.fetchall})
         combis = [(None, None)] + [
             (assembly, chrom)
             for assembly, chrom, *_ in self.fetchall
