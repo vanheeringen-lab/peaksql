@@ -23,7 +23,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install .
         pip install coverage[toml]  # test related
-        pip install --no-deps torchvision
         pip install flake8 black mypy     # code quality related
 
     - name: Run tests
