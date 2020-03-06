@@ -6,3 +6,4 @@
 ![ContinuousDeployment](https://github.com/vanheeringen-lab/peaksql/workflows/ContinuousDeployment/badge.svg)
 
 This is a little tryout
+Build!
