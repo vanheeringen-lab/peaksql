@@ -6,7 +6,7 @@ from test.test_02_database import DATABASE_BED
 
 
 class TestMLIntegration(unittest.TestCase):
-    """ A test class to test the peaksql.datasets._BedDataSet family """
+    """ A test class to test integration with common machine learning practices """
 
     def test_401_iterable(self):
         dataset = peaksql.BedRegionDataSet(DATABASE_BED, nr_rand_pos=100, seq_length=3)
