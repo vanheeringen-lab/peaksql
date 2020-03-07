@@ -5,4 +5,13 @@
 .mypy_cache/
 dist/
 *.egg-info/
+_sources/
+_static/
+_build/
+.buildinfo
+.doctrees/
+*.html
+*.inv
+*.rst
+searchindex.js
 __pycache__
