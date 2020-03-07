@@ -30,6 +30,17 @@ author = "Maarten van der Sande"
 # ones.
 extensions = ["sphinx.ext.autodoc"]
 
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    exclusions = ["FROM", "SELECT_CHROM_ASS"]
+    exclude = name in exclusions
+    return skip or exclude
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", autodoc_skip_member)
+
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
