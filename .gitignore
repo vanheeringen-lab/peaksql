@@ -12,6 +12,5 @@ _build/
 .doctrees/
 *.html
 *.inv
-*.rst
 searchindex.js
 __pycache__
