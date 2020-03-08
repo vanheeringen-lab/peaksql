@@ -1,5 +1,11 @@
-PeakSQL: easy, fast, and dynamic machine learning database for genomics.
-========================================================================
+..
+  First we include the README, so we do not have to have two copies of introductions
+
+.. mdinclude:: ../README.md
+
+
+Contents:
+=========
 
 .. toctree::
    :maxdepth: 2

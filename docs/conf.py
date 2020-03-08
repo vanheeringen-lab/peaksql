@@ -28,7 +28,8 @@ author = "Maarten van der Sande"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc"]
+extensions = ["sphinx.ext.autodoc", "m2r"]
+source_suffix = [".rst", ".md"]
 
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
