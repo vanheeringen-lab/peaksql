@@ -1,11 +1,14 @@
+*Note: This package is in active development and functionality might change or not work correctly (yet)!*
+
 # PeakSQL
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/d5f1443a164eb0d64d33/maintainability)](https://codeclimate.com/github/vanheeringen-lab/peaksql/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/d5f1443a164eb0d64d33/test_coverage)](https://codeclimate.com/github/vanheeringen-lab/peaksql/test_coverage)
-![ContinuousIntegration](https://github.com/vanheeringen-lab/peaksql/workflows/ContinuousIntegration/badge.svg)
-![ContinuousDeployment](https://github.com/vanheeringen-lab/peaksql/workflows/ContinuousDeployment/badge.svg)
+![docs](https://github.com/vanheeringen-lab/peaksql/workflows/docs/badge.svg?branch=master)
+![continuous-integration](https://github.com/vanheeringen-lab/peaksql/workflows/continuous-integration/badge.svg?branch=master)
+![continuous-deployment](https://github.com/vanheeringen-lab/peaksql/workflows/continuous-deployment/badge.svg?branch=master)
 
-Easy, fast, and dynamic machine learning database for genomics. Supports common bed-like dataformats like *.bed*, *.narrowPeak*, and *bedgraph*; and the binary *bigwig* format. 
+Dynamic machine learning database for genomics. Supports common bed-like dataformats like *.bed*, and *.narrowPeak*. *bedgraph*; and the binary *bigwig* format. 
 
 ### Installation
 PeakSQL can be installed through pip:
