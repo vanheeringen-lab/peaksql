@@ -84,9 +84,9 @@
 <li class="toctree-l2"><a class="reference internal" href="index.html#installation">Installation</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="index.html#getting-started">Getting started</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">API</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#module-peaksql.database">DataBase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#database">DataBase</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#dataset-loaders">DataSet loaders</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-peaksql.util">peaksql.util module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-peaksql.util">Util</a></li>
 </ul>
 </li>
 </ul>
@@ -94,13 +94,14 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-peaksql.database">DataBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#database">DataBase</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dataset-loaders">DataSet loaders</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-peaksql.datasets.bedregion">peaksql.datasets.bedregion module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-peaksql.datasets.narrowpeak">peaksql.datasets.narrowpeak module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#peaksql-datasets-base">peaksql.datasets.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#peaksql-datasets-bedregion">peaksql.datasets.bedregion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#peaksql-datasets-narrowpeak-module">peaksql.datasets.narrowpeak module</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-peaksql.util">peaksql.util module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-peaksql.util">Util</a></li>
 </ul>
 </li>
 </ul>
@@ -169,23 +170,21 @@
             
   <div class="section" id="api">
 <h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
-<p>This is the public API ….</p>
-<div class="section" id="module-peaksql.database">
-<span id="database"></span><h2>DataBase<a class="headerlink" href="#module-peaksql.database" title="Permalink to this headline">¶</a></h2>
-<p>The Database Module…</p>
+<p>This is a collection of public functions and classes relevant for users of PeakSQL.</p>
+<div class="section" id="database">
+<h2>DataBase<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="peaksql.database.DataBase">
 <em class="property">class </em><code class="sig-prename descclassname">peaksql.database.</code><code class="sig-name descname">DataBase</code><span class="sig-paren">(</span><em class="sig-param">db: str = 'PeakSQL.sqlite'</em>, <em class="sig-param">in_memory: bool = False</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.database.DataBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The DataBase class is an easy interface to store pre-processed NGS data for Machine
-Learning.</p>
-<p>It allows for …</p>
+<dd><p>The DataBase class serves as an easy interface to store and retrieve NGS data in a
+peaksql database.</p>
 <dl class="method">
 <dt id="peaksql.database.DataBase.add_assembly">
 <code class="sig-name descname">add_assembly</code><span class="sig-paren">(</span><em class="sig-param">assembly_path: str</em>, <em class="sig-param">assembly: str = None</em>, <em class="sig-param">species: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.database.DataBase.add_assembly" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add an assembly (genome) to the database. Sequences from the assembly are
-retrieved with PyFaidx, and the database assumes the assembly does not change
-location during during its lifetime.</p>
+retrieved with PyFaidx, so they aren’t stored in the database, only the path to
+the fasta file is stored. This thus assumes that the assembly does not change
+location during during the database’s lifetime.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -219,19 +218,7 @@ on conditions , e.g. when streaming data with a DataSet.</p></li>
 <dl class="method">
 <dt id="peaksql.database.DataBase.assemblies">
 <em class="property">property </em><code class="sig-name descname">assemblies</code><a class="headerlink" href="#peaksql.database.DataBase.assemblies" title="Permalink to this definition">¶</a></dt>
-<dd><p>return all registred assemblies</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="peaksql.database.DataBase.get_assembly_id">
-<code class="sig-name descname">get_assembly_id</code><a class="headerlink" href="#peaksql.database.DataBase.get_assembly_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Quickly get the AssemblyId based on Assembly (name).</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="peaksql.database.DataBase.get_chrom_id">
-<code class="sig-name descname">get_chrom_id</code><a class="headerlink" href="#peaksql.database.DataBase.get_chrom_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Quickly get the ChromosomeId based on assemblyId and Chromosome (name).</p>
+<dd><p>All assemblies registred in the database.</p>
 </dd></dl>
 
 </dd></dl>
@@ -239,221 +226,65 @@ on conditions , e.g. when streaming data with a DataSet.</p></li>
 </div>
 <div class="section" id="dataset-loaders">
 <h2>DataSet loaders<a class="headerlink" href="#dataset-loaders" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="module-peaksql.datasets.bedregion">
-<span id="peaksql-datasets-bedregion-module"></span><h3>peaksql.datasets.bedregion module<a class="headerlink" href="#module-peaksql.datasets.bedregion" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="peaksql-datasets-base">
+<h3>peaksql.datasets.base<a class="headerlink" href="#peaksql-datasets-base" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet">
-<em class="property">class </em><code class="sig-prename descclassname">peaksql.datasets.bedregion.</code><code class="sig-name descname">BedRegionDataSet</code><span class="sig-paren">(</span><em class="sig-param">database: str</em>, <em class="sig-param">where: str = ''</em>, <em class="sig-param">seq_length: int = 200</em>, <em class="sig-param">label_func: str = 'any'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">peaksql.datasets.bed._BedDataSet</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
-<p>The BedRegion …</p>
-<dl class="attribute">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.SELECT_LABEL">
-<code class="sig-name descname">SELECT_LABEL</code><em class="property">: str</em><em class="property"> = ' Bed.ChromosomeId, Bed.ConditionId, BedVirtual.ChromStart, BedVirtual.ChromEnd'</em><a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.SELECT_LABEL" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<dt id="peaksql.datasets.base._DataSet">
+<em class="property">class </em><code class="sig-prename descclassname">peaksql.datasets.base.</code><code class="sig-name descname">_DataSet</code><span class="sig-paren">(</span><em class="sig-param">database: str</em>, <em class="sig-param">where: str = ''</em>, <em class="sig-param">seq_length: int = 200</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.datasets.base._DataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>DataSet baseclass.</p>
 <dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.array_from_query">
-<code class="sig-name descname">array_from_query</code><span class="sig-paren">(</span><em class="sig-param">query: List[Tuple[int, int, int, int]], cur_chrom_id: int, chromstart: int, chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.array_from_query" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.database">
-<em class="property">property </em><code class="sig-name descname">database</code><a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.database" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.get_label">
-<code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">assembly: str</em>, <em class="sig-param">chrom: str</em>, <em class="sig-param">chromstart: int</em>, <em class="sig-param">chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.get_label" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the label that corresponds to chromstart:chromend.</p>
+<dt id="peaksql.datasets.base._DataSet.__getitem__">
+<code class="sig-name descname">__getitem__</code><span class="sig-paren">(</span><em class="sig-param">index: int</em><span class="sig-paren">)</span> &#x2192; Tuple[numpy.ndarray, numpy.ndarray]<a class="headerlink" href="#peaksql.datasets.base._DataSet.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the sequence in one-hot encoding and the label of the corresponding
+index.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.get_onehot_sequence">
-<code class="sig-name descname">get_onehot_sequence</code><span class="sig-paren">(</span><em class="sig-param">assembly: str</em>, <em class="sig-param">chrom: str</em>, <em class="sig-param">chromstart: int</em>, <em class="sig-param">chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.get_onehot_sequence" title="Permalink to this definition">¶</a></dt>
+<dt id="peaksql.datasets.base._DataSet.get_label">
+<em class="property">abstract </em><code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">assembly: str</em>, <em class="sig-param">chrom: str</em>, <em class="sig-param">chromstart: int</em>, <em class="sig-param">chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.base._DataSet.get_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the label belonging to the combination of assembly, chromosome, chromstart,
+and chromend.</p>
+<p>This function is overwritten by each DataSet to apply DataSet specific logic.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="peaksql.datasets.base._DataSet.get_onehot_sequence">
+<code class="sig-name descname">get_onehot_sequence</code><span class="sig-paren">(</span><em class="sig-param">assembly: str</em>, <em class="sig-param">chrom: str</em>, <em class="sig-param">chromstart: int</em>, <em class="sig-param">chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.base._DataSet.get_onehot_sequence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the one-hot encoded sequence based on the assembly, chromosome, chromstart
 and chromend.</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.get_random_positions">
-<code class="sig-name descname">get_random_positions</code><span class="sig-paren">(</span><em class="sig-param">seq_length: int</em>, <em class="sig-param">nr_rand_pos: int</em><span class="sig-paren">)</span> &#x2192; Tuple[list, numpy.ndarray, numpy.ndarray]<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.get_random_positions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate a map that connects __getitem__ indices to (assembly, chrom,
-chromstart) triplet. The positions are sampled accross the query randomly, but
-proportional to the size of each chromosome.</p>
-<p>The first return value is a list of (assembly, chrom) pairs, the second list
-consists of the cumulative sum of the number of indices that belong to this
-assembly, chrom pair, and the third list contains all chromstarts of the
-sequences. This allows for a decently fast and memory-efficient lookup of
-genomic positions corresponding to an index.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.get_strided_positions">
-<code class="sig-name descname">get_strided_positions</code><span class="sig-paren">(</span><em class="sig-param">seq_length: int</em>, <em class="sig-param">stride: int</em><span class="sig-paren">)</span> &#x2192; Tuple[list, numpy.ndarray, numpy.ndarray]<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.get_strided_positions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate a map that connects __getitem__ indices to (assembly, chrom,
-chromstart) triplet. The positions are sampled accross the query with an even
-stride.</p>
-<p>The first return value is a list of (assembly, chrom) pairs, the second list
-consists of the cumulative sum of the number of indices that belong to this
-assembly, chrom pair, and the third list contains all chromstarts of the
-sequences. This allows for a decently fast and memory-efficient lookup of
-genomic positions corresponding to an index.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.label_all">
-<code class="sig-name descname">label_all</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.label_all" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.label_any">
-<code class="sig-name descname">label_any</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.label_any" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.label_fraction">
-<code class="sig-name descname">label_fraction</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.label_fraction" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.label_from_array">
-<code class="sig-name descname">label_from_array</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.label_from_array" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.label_inner_all">
-<code class="sig-name descname">label_inner_all</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.label_inner_all" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.label_inner_any">
-<code class="sig-name descname">label_inner_any</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.label_inner_any" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet.label_inner_fraction">
-<code class="sig-name descname">label_inner_fraction</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet.label_inner_fraction" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
 </div>
-<div class="section" id="module-peaksql.datasets.narrowpeak">
-<span id="peaksql-datasets-narrowpeak-module"></span><h3>peaksql.datasets.narrowpeak module<a class="headerlink" href="#module-peaksql.datasets.narrowpeak" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="peaksql-datasets-bedregion">
+<h3>peaksql.datasets.bedregion<a class="headerlink" href="#peaksql-datasets-bedregion" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="peaksql.datasets.bedregion.BedRegionDataSet">
+<em class="property">class </em><code class="sig-prename descclassname">peaksql.datasets.bedregion.</code><code class="sig-name descname">BedRegionDataSet</code><span class="sig-paren">(</span><em class="sig-param">database: str</em>, <em class="sig-param">where: str = ''</em>, <em class="sig-param">seq_length: int = 200</em>, <em class="sig-param">label_func: str = 'any'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">peaksql.datasets.bed._BedDataSet</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>The BedRegion DataSet</p>
+</dd></dl>
+
+</div>
+<div class="section" id="peaksql-datasets-narrowpeak-module">
+<h3>peaksql.datasets.narrowpeak module<a class="headerlink" href="#peaksql-datasets-narrowpeak-module" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet">
 <em class="property">class </em><code class="sig-prename descclassname">peaksql.datasets.narrowpeak.</code><code class="sig-name descname">NarrowPeakDataSet</code><span class="sig-paren">(</span><em class="sig-param">database: str</em>, <em class="sig-param">where: str = ''</em>, <em class="sig-param">seq_length: int = 200</em>, <em class="sig-param">label_func: str = 'any'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">peaksql.datasets.bed._BedDataSet</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
-<p>The NarrowPeakDataSet …</p>
-<dl class="attribute">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.SELECT_LABEL">
-<code class="sig-name descname">SELECT_LABEL</code><em class="property">: str</em><em class="property"> = ' Bed.ChromosomeId, Bed.ConditionId, BedVirtual.ChromStart, Bed.Peak'</em><a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.SELECT_LABEL" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.array_from_query">
-<code class="sig-name descname">array_from_query</code><span class="sig-paren">(</span><em class="sig-param">query: List[Tuple[int, int, int, int]], cur_chrom_id: int, chromstart: int, chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.array_from_query" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.database">
-<em class="property">property </em><code class="sig-name descname">database</code><a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.database" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.get_label">
-<code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">assembly: str</em>, <em class="sig-param">chrom: str</em>, <em class="sig-param">chromstart: int</em>, <em class="sig-param">chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.get_label" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the label that corresponds to chromstart:chromend.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.get_onehot_sequence">
-<code class="sig-name descname">get_onehot_sequence</code><span class="sig-paren">(</span><em class="sig-param">assembly: str</em>, <em class="sig-param">chrom: str</em>, <em class="sig-param">chromstart: int</em>, <em class="sig-param">chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.get_onehot_sequence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the one-hot encoded sequence based on the assembly, chromosome, chromstart
-and chromend.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.get_random_positions">
-<code class="sig-name descname">get_random_positions</code><span class="sig-paren">(</span><em class="sig-param">seq_length: int</em>, <em class="sig-param">nr_rand_pos: int</em><span class="sig-paren">)</span> &#x2192; Tuple[list, numpy.ndarray, numpy.ndarray]<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.get_random_positions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate a map that connects __getitem__ indices to (assembly, chrom,
-chromstart) triplet. The positions are sampled accross the query randomly, but
-proportional to the size of each chromosome.</p>
-<p>The first return value is a list of (assembly, chrom) pairs, the second list
-consists of the cumulative sum of the number of indices that belong to this
-assembly, chrom pair, and the third list contains all chromstarts of the
-sequences. This allows for a decently fast and memory-efficient lookup of
-genomic positions corresponding to an index.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.get_strided_positions">
-<code class="sig-name descname">get_strided_positions</code><span class="sig-paren">(</span><em class="sig-param">seq_length: int</em>, <em class="sig-param">stride: int</em><span class="sig-paren">)</span> &#x2192; Tuple[list, numpy.ndarray, numpy.ndarray]<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.get_strided_positions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate a map that connects __getitem__ indices to (assembly, chrom,
-chromstart) triplet. The positions are sampled accross the query with an even
-stride.</p>
-<p>The first return value is a list of (assembly, chrom) pairs, the second list
-consists of the cumulative sum of the number of indices that belong to this
-assembly, chrom pair, and the third list contains all chromstarts of the
-sequences. This allows for a decently fast and memory-efficient lookup of
-genomic positions corresponding to an index.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_all">
-<code class="sig-name descname">label_all</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_all" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_any">
-<code class="sig-name descname">label_any</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_any" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_fraction">
-<code class="sig-name descname">label_fraction</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_fraction" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_from_array">
-<code class="sig-name descname">label_from_array</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_from_array" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_inner_all">
-<code class="sig-name descname">label_inner_all</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_inner_all" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_inner_any">
-<code class="sig-name descname">label_inner_any</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_inner_any" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_inner_fraction">
-<code class="sig-name descname">label_inner_fraction</code><span class="sig-paren">(</span><em class="sig-param">positions: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet.label_inner_fraction" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<p>The NarrowPeakDataSet expects that narrowPeak files have been added to the DataBase.</p>
 </dd></dl>
 
 </div>
 </div>
 <div class="section" id="module-peaksql.util">
-<span id="peaksql-util-module"></span><h2>peaksql.util module<a class="headerlink" href="#module-peaksql.util" title="Permalink to this headline">¶</a></h2>
-<dl class="attribute">
-<dt id="peaksql.util.binary_search">
-<code class="sig-prename descclassname">peaksql.util.</code><code class="sig-name descname">binary_search</code><a class="headerlink" href="#peaksql.util.binary_search" title="Permalink to this definition">¶</a></dt>
-<dd><p>Does a binary search to not find the value in a list, but the index where the value
-is in between two values (returns the higher index of the two).</p>
-<p>index: 5
-lens: [0, 4, 6, 8, 22]
-returns: 2</p>
-</dd></dl>
-
+<span id="util"></span><h2>Util<a class="headerlink" href="#module-peaksql.util" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="peaksql.util.sequence_to_onehot">
 <code class="sig-prename descclassname">peaksql.util.</code><code class="sig-name descname">sequence_to_onehot</code><span class="sig-paren">(</span><em class="sig-param">sequence</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.util.sequence_to_onehot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a sequence of length n to one-hot encoding of shape (n x 4).</p>
+<dd><p>Convert a sequence of length n to a one-hot encoded array of shape (n x 4).</p>
+<p>The nucleotides A, C, G, T respectively correspond to indices 0, 1, 2, 3.</p>
 </dd></dl>
 
 </div>
