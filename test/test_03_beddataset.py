@@ -76,7 +76,7 @@ class TestDataBase(unittest.TestCase):
         query = [[0, 0, 15, 25], [1, 0, 5, 13]]
         dataset = peaksql.BedRegionDataSet(DATABASE_BED, seq_length=10, stride=10)
         assert np.all(
-            dataset.array_from_query(query, chromid, chromstart, chromend)
+            dataset._array_from_query(query, chromid, chromstart, chromend)
             == np.array(
                 [[True, True, True, False, False, False, False, False, False, False]]
             )
@@ -89,7 +89,7 @@ class TestDataBase(unittest.TestCase):
         query = [[0, 0, 15, 25], [1, 0, 5, 13]]
         dataset = peaksql.NarrowPeakDataSet(DATABASE_NWP, seq_length=10, stride=10)
         assert np.all(
-            dataset.array_from_query(query, chromid, chromstart, chromend)
+            dataset._array_from_query(query, chromid, chromstart, chromend)
             == np.array(
                 [[False, False, False, False, False, False, False, False, True, False]]
             )

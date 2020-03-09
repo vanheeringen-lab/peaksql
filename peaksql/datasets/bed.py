@@ -111,7 +111,7 @@ class _BedDataSet(_DataSet, ABC):
                   ({chromend} >= BedVirtual.ChromStart)
         """
         query_result = self._database.cursor.execute(query).fetchall()
-        positions = self.array_from_query(
+        positions = self._array_from_query(
             query_result, chromosomeid, chromstart, chromend
         )
         labels = self.label_from_array(positions)
