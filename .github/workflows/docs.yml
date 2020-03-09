@@ -7,11 +7,10 @@ name: Docs
 on: push
 
 jobs:
-  build-and-deploy:
+  docs:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
         with:
           persist-credentials: false
 
@@ -27,6 +26,7 @@ jobs:
       - name: Build
         run: | 
           sphinx-build docs/ build
+          touch build/.nojekyll
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@releases/v3
