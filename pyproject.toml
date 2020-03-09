@@ -1,7 +1,7 @@
 [project]
 name = "peaksql"
 packages = ["peaksql", "peaksql/datasets"]
-version = "0.0.2"
+version = "0.0.3"
 description = "TODO: add peaksq description"
 author = [
     "Maarten van der Sande <maartenvandersande@hotmail.com>"]
@@ -19,11 +19,11 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Bio-Informatics"]
 
-install_requires = ["pyfaidx", "numba"]
+install_requires = ["pyfaidx", "numba", "numpy"]
 python_requires = ">3.7"
 
 [build-system]
-requires = ["setuptools", "wheel", "toml", "numpy"]
+requires = ["setuptools", "wheel", "toml"]
 build-backend = "setuptools.build_meta"
 
 [tool.coverage]
