@@ -114,6 +114,6 @@ class _BedDataSet(_DataSet, ABC):
         positions = self._array_from_query(
             query_result, chromosomeid, chromstart, chromend
         )
-        labels = self.label_from_array(positions)
+        labels = self._label_from_array(positions)
 
         return labels
