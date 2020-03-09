@@ -4,18 +4,9 @@
 .. mdinclude:: ../README.md
 
 
-Contents:
-=========
-
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :hidden:
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   index
+   api
