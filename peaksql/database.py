@@ -1,6 +1,3 @@
-"""
-The Database Module...
-"""
 import sqlite3
 import os
 from functools import lru_cache
@@ -12,13 +9,18 @@ import peaksql.tables as tables
 
 class DataBase:
     """
-    The DataBase class is an easy interface to store pre-processed NGS data for Machine
-    Learning.
-
-    It allows for ...
+    The DataBase class serves as an easy interface to store and retrieve NGS data in a
+    peaksql database.
     """
 
     def __init__(self, db: str = "PeakSQL.sqlite", in_memory: bool = False):
+        """
+        :param db: the name (path) of the database, will create a new database if it
+            doesn't exist yet.
+        :param in_memory: whether to load a (pre-existing) database into memory. This
+            can be useful in combination with one of the dataloaders for
+            faster queries.
+        """
         self.db = db
 
         # connect, and set a relatively high timeout number for multiprocessing
@@ -54,7 +56,10 @@ class DataBase:
     @lru_cache()
     def get_assembly_id(self, assembly_name: str) -> int:
         """
-        Quickly get the AssemblyId based on Assembly (name).
+        Get the AssemblyId based on Assembly (name).
+
+        :param assembly_name: name of the assembly
+        :return: id of the assembly
         """
         result = self.cursor.execute(
             f"SELECT AssemblyId FROM Assembly "
@@ -68,7 +73,11 @@ class DataBase:
     @lru_cache(maxsize=2 ** 16)
     def get_chrom_id(self, assembly_id: int, chrom_name: str) -> int:
         """
-        Quickly get the ChromosomeId based on assemblyId and Chromosome (name).
+        Get the ChromosomeId based on assemblyId and Chromosome (name).
+
+        :param assembly_id: id of the assembly
+        :param chrom_name: name of the assembly
+        :return: id of the chromosome
         """
         result = self.cursor.execute(
             f"SELECT ChromosomeId FROM Chromosome "
@@ -85,7 +94,7 @@ class DataBase:
     @property
     def assemblies(self):
         """
-        return all registred assemblies
+        All assemblies registred in the database.
         """
         return [
             val[0]
@@ -97,14 +106,15 @@ class DataBase:
     ):
         """
         Add an assembly (genome) to the database. Sequences from the assembly are
-        retrieved with PyFaidx, and the database assumes the assembly does not change
-        location during during its lifetime.
+        retrieved with PyFaidx, so they aren't stored in the database, only the path to
+        the fasta file is stored. This thus assumes that the assembly does not change
+        location during during the database's lifetime.
 
         :param assembly_path: The path to the assembly file.
         :param assembly: The name of the assembly (optional: default is the name of the
-                         file).
+            file).
         :param species: The name of the species the assembly belongs to (optional:
-                        default is the assembly name)
+            default is the assembly name)
         """
         assert not self.in_memory, (
             "It is currently not supported to add data with an in-memory " "database."
@@ -154,9 +164,9 @@ class DataBase:
 
         :param data_path: The path to the assembly file.
         :param assembly: The name of the assembly. Requires the assembly to be added to
-                         the database prior.
+            the database prior.
         :param condition: Experimental condition (optional). This allows for filtering
-                          on conditions , e.g. when streaming data with a DataSet.
+            on conditions , e.g. when streaming data with a DataSet.
         """
         assert not self.in_memory, (
             "It is currently not supported to add data with an in-memory " "database."

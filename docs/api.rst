@@ -1,42 +1,39 @@
 API
 ===============
 
-This is the public API ....
+This is a collection of public functions and classes relevant for users of PeakSQL.
 
 DataBase
 ---------------
 
-.. automodule:: peaksql.database
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. autoclass:: peaksql.database.DataBase
+   :members: add_assembly, add_data, assemblies
 
 DataSet loaders
 ---------------
 
-peaksql.datasets.bedregion module
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+peaksql.datasets.base
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: peaksql.datasets.bedregion
-   :members:
-   :undoc-members:
+.. autoclass:: peaksql.datasets.base._DataSet
+   :members: __getitem__, get_onehot_sequence, get_label
+
+peaksql.datasets.bedregion
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: peaksql.datasets.bedregion.BedRegionDataSet
    :show-inheritance:
-   :inherited-members:
 
 peaksql.datasets.narrowpeak module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: peaksql.datasets.narrowpeak
-   :members:
-   :undoc-members:
+.. autoclass:: peaksql.datasets.narrowpeak.NarrowPeakDataSet
    :show-inheritance:
-   :inherited-members:
 
-
-peaksql.util module
+Util
 -------------------
 
 .. automodule:: peaksql.util
-   :members:
+   :members: sequence_to_onehot
    :undoc-members:
    :show-inheritance:

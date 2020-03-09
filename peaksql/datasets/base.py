@@ -36,8 +36,8 @@ class _DataSet(ABC):
         query = (
             self.SELECT_CHROM_ASS + self.FROM + self.WHERE + " ORDER BY ChromosomeId"
         )
-        self.database.cursor.execute(query)
-        self.fetchall = self.database.cursor.fetchall()
+        self._database.cursor.execute(query)
+        self.fetchall = self._database.cursor.fetchall()
 
         # get the genomic positions of our indices
         if "stride" in kwargs:
@@ -54,7 +54,7 @@ class _DataSet(ABC):
         # get all the conditions and their id in the database
         self.all_conditions = {
             k: v
-            for k, v in self.database.cursor.execute(
+            for k, v in self._database.cursor.execute(
                 "SELECT DISTINCT Condition, ConditionId FROM Condition"
             ).fetchall()
         }
@@ -68,7 +68,7 @@ class _DataSet(ABC):
         """
         return self.cumsum[-1]
 
-    def __getitem__(self, index: int) -> Tuple[np.array, int]:
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the sequence in one-hot encoding and the label of the corresponding
         index.
@@ -138,7 +138,7 @@ class _DataSet(ABC):
         non_empty_combis = [(None, None)]
         for assembly, chrom in combis[1:]:
             positions = np.arange(
-                0, len(self.database.fastas[assembly][chrom]) - seq_length + 1, stride
+                0, len(self._database.fastas[assembly][chrom]) - seq_length + 1, stride
             )
             if len(positions):
                 non_empty_combis.append((assembly, chrom))
@@ -166,13 +166,13 @@ class _DataSet(ABC):
         combis = [(None, None)] + [
             (assembly, chrom)
             for assembly, chrom, *_ in self.fetchall
-            if len(self.database.fastas[assembly][chrom]) > seq_length
+            if len(self._database.fastas[assembly][chrom]) > seq_length
         ]
 
         # distribute the positions over the chromosomes
         sizes = []
         for assembly, chrom in combis[1:]:
-            sizes.append(len(self.database.fastas[assembly][chrom]))
+            sizes.append(len(self._database.fastas[assembly][chrom]))
 
         distribution = np.random.choice(
             range(len(sizes)), size=nr_rand_pos, p=np.array(sizes) / np.sum(sizes)
@@ -190,7 +190,7 @@ class _DataSet(ABC):
                 startpos.append(
                     np.random.randint(
                         0,
-                        len(self.database.fastas[assembly][chrom]) - seq_length,
+                        len(self._database.fastas[assembly][chrom]) - seq_length,
                         size=counts[where[0][0]],
                     )
                 )
@@ -218,9 +218,15 @@ class _DataSet(ABC):
     def get_label(
         self, assembly: str, chrom: str, chromstart: int, chromend: int
     ) -> np.ndarray:
+        """
+        Get the label belonging to the combination of assembly, chromosome, chromstart,
+        and chromend.
+
+        This function is overwritten by each DataSet to apply DataSet specific logic.
+        """
         pass
 
     @property
-    def database(self):
+    def _database(self):
         process = self._get_process()
         return self.databases[process]

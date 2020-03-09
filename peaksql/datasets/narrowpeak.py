@@ -7,7 +7,7 @@ from .bed import _BedDataSet
 
 class NarrowPeakDataSet(_BedDataSet, ABC):
     """
-    The NarrowPeakDataSet ...
+    The NarrowPeakDataSet expects that narrowPeak files have been added to the DataBase.
     """
 
     SELECT_LABEL = " Bed.ChromosomeId, Bed.ConditionId, BedVirtual.ChromStart, Bed.Peak"
@@ -24,7 +24,7 @@ class NarrowPeakDataSet(_BedDataSet, ABC):
             self, database, where, seq_length, label_func=label_func, **kwargs
         )
 
-    def array_from_query(
+    def _array_from_query(
         self,
         query: List[Tuple[int, int, int, int]],
         cur_chrom_id: int,

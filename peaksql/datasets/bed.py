@@ -74,7 +74,7 @@ class _BedDataSet(_DataSet, ABC):
         )
 
     @abstractmethod
-    def array_from_query(
+    def _array_from_query(
         self,
         query: List[Tuple[int, int, int, int]],
         cur_chrom_id: int,
@@ -83,7 +83,7 @@ class _BedDataSet(_DataSet, ABC):
     ) -> np.ndarray:
         pass
 
-    def label_from_array(self, positions: np.ndarray) -> np.ndarray:
+    def _label_from_array(self, positions: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
     def get_label(
@@ -92,10 +92,10 @@ class _BedDataSet(_DataSet, ABC):
         """
         Get the label that corresponds to chromstart:chromend.
         """
-        assemblyid = self.database.get_assembly_id(assembly)
-        chromosomeid = self.database.get_chrom_id(assemblyid, chrom)
+        assemblyid = self._database.get_assembly_id(assembly)
+        chromosomeid = self._database.get_chrom_id(assemblyid, chrom)
 
-        offset = self.database.cursor.execute(
+        offset = self._database.cursor.execute(
             f"""
             SELECT Offset FROM Chromosome WHERE ChromosomeId = {chromosomeid}
             """
@@ -110,7 +110,7 @@ class _BedDataSet(_DataSet, ABC):
             WHERE ({chromstart} <= BedVirtual.ChromEnd) AND
                   ({chromend} >= BedVirtual.ChromStart)
         """
-        query_result = self.database.cursor.execute(query).fetchall()
+        query_result = self._database.cursor.execute(query).fetchall()
         positions = self.array_from_query(
             query_result, chromosomeid, chromstart, chromend
         )

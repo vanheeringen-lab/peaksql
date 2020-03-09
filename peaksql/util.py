@@ -65,7 +65,9 @@ def _sequence_to_onehot(sequence: np.ndarray) -> np.ndarray:
 
 def sequence_to_onehot(sequence) -> np.ndarray:
     """
-    Convert a sequence of length n to one-hot encoding of shape (n x 4).
+    Convert a sequence of length n to a one-hot encoded array of shape (n x 4).
+
+    The nucleotides A, C, G, T respectively correspond to indices 0, 1, 2, 3.
     """
     return _sequence_to_onehot(str(sequence).upper().encode("utf-8"))
 

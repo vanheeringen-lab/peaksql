@@ -23,7 +23,7 @@ install_requires = ["pyfaidx", "numba"]
 python_requires = ">3.7"
 
 [build-system]
-requires = ["setuptools", "wheel", "toml"]
+requires = ["setuptools", "wheel", "toml", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [tool.coverage]
