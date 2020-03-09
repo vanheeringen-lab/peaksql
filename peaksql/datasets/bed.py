@@ -44,7 +44,7 @@ class _BedDataSet(_DataSet, ABC):
                 )
             self.fraction = kwargs["fraction"]
 
-        setattr(self, "label_from_array", eval("self.label_" + kwargs["label_func"]))
+        setattr(self, "_label_from_array", eval("self.label_" + kwargs["label_func"]))
 
     def label_any(self, positions: np.ndarray) -> np.ndarray:
         return np.any(positions, axis=1)
