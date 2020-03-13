@@ -1,11 +1,11 @@
 import numpy as np
-from abc import ABC
 from typing import List, Tuple
 
-from .bed import _BedDataSet
+from .labeler import _Labeler
+from .base import _DataSet
 
 
-class NarrowPeakDataSet(_BedDataSet, ABC):
+class NarrowPeakDataSet(_DataSet, _Labeler):
     """
     The NarrowPeakDataSet ...
     """
@@ -20,9 +20,8 @@ class NarrowPeakDataSet(_BedDataSet, ABC):
         label_func: str = "any",
         **kwargs
     ):
-        _BedDataSet.__init__(
-            self, database, where, seq_length, label_func=label_func, **kwargs
-        )
+        _DataSet.__init__(self, database, where, seq_length, **kwargs)
+        _Labeler.__init__(self, label_func=label_func)
 
     def array_from_query(
         self,

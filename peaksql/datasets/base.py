@@ -2,7 +2,7 @@ import numpy as np
 import multiprocessing
 import threading
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from ..database import DataBase
 import peaksql.util as util
@@ -214,13 +214,52 @@ class _DataSet(ABC):
 
         return seq
 
-    @abstractmethod
     def get_label(
         self, assembly: str, chrom: str, chromstart: int, chromend: int
     ) -> np.ndarray:
-        pass
+        """
+        Get the label that corresponds to chromstart:chromend.
+        """
+        assemblyid = self.database.get_assembly_id(assembly)
+        chromosomeid = self.database.get_chrom_id(assemblyid, chrom)
+
+        offset = self.database.cursor.execute(
+            f"""
+            SELECT Offset FROM Chromosome WHERE ChromosomeId = {chromosomeid}
+            """
+        ).fetchone()[0]
+        chromstart += offset
+        chromend += offset
+
+        query = f"""
+            SELECT {self.SELECT_LABEL}
+            FROM BedVirtual
+            INNER JOIN Bed on BedVirtual.BedId = Bed.BedId
+            WHERE ({chromstart} <= BedVirtual.ChromEnd) AND
+                  ({chromend} >= BedVirtual.ChromStart)
+        """
+        query_result = self.database.cursor.execute(query).fetchall()
+        positions = self.array_from_query(
+            query_result, chromosomeid, chromstart, chromend
+        )
+        labels = self.label_from_array(positions)
+
+        return labels
 
     @property
     def database(self):
         process = self._get_process()
         return self.databases[process]
+
+    @abstractmethod
+    def array_from_query(
+        self,
+        query: List[Tuple[int, int, int, int]],
+        cur_chrom_id: int,
+        chromstart: int,
+        chromend: int,
+    ) -> np.ndarray:
+        pass
+
+    def label_from_array(self, positions: np.ndarray) -> np.ndarray:
+        raise NotImplementedError

@@ -6,7 +6,7 @@ from test.test_02_database import DATABASE_BED, DATABASE_NWP
 
 
 class TestDataBase(unittest.TestCase):
-    """ A test class to test the peaksql.datasets._BedDataSet family """
+    """ A test class to test the peaksql.datasets """
 
     positions = np.array(
         [
@@ -126,7 +126,7 @@ class TestDataBase(unittest.TestCase):
         for count in un_cumsum[1:]:
             assert 0.245 <= count / 100_000 <= 0.255
 
-    def test_314_BedDataSet_label_func_parsing(self):
+    def test_314_Labeler_func_parsing(self):
         with self.assertRaises(ValueError):
             peaksql.BedRegionDataSet(
                 DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_any"
