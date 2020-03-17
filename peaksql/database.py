@@ -51,24 +51,10 @@ class DataBase:
             for assembly, abspath in self.cursor.fetchall()
         }
 
-    @lru_cache()
-    def get_assembly_id(self, assembly_name: str) -> int:
-        """
-        Quickly get the AssemblyId based on Assembly (name).
-        """
-        result = self.cursor.execute(
-            f"SELECT AssemblyId FROM Assembly "
-            f"    WHERE Assembly='{assembly_name}' "
-            f"LIMIT 1"
-        ).fetchone()
-        if result:
-            return result[0]
-        raise ValueError(f"Assembly {assembly_name} is not present in the database")
-
     @lru_cache(maxsize=2 ** 16)
-    def get_chrom_id(self, assembly_id: int, chrom_name: str) -> int:
+    def _get_chrom_id(self, assembly_id: int, chrom_name: str) -> int:
         """
-        Quickly get the ChromosomeId based on assemblyId and Chromosome (name).
+        Get the ChromosomeId based on assemblyId and Chromosome (name).
         """
         result = self.cursor.execute(
             f"SELECT ChromosomeId FROM Chromosome "
@@ -81,6 +67,19 @@ class DataBase:
         raise ValueError(
             f"No chromosome {chrom_name} for assembly with assembly id {assembly_id}"
         )
+
+    @lru_cache(maxsize=2 ** 16)
+    def get_offset_chromosomeid(self, assembly_name, chrom_name):
+        """
+        Get the offset and chromosomeid based on assembly and chromosome name.
+        """
+        return self.cursor.execute(
+            f"""
+            SELECT Offset, ChromosomeId FROM Chromosome
+            INNER JOIN Assembly ON Assembly.AssemblyId = Chromosome.AssemblyId
+            WHERE Chromosome='{chrom_name}' AND Assembly='{assembly_name}'
+            """
+        ).fetchone()
 
     @property
     def assemblies(self):
@@ -158,9 +157,9 @@ class DataBase:
         :param condition: Experimental condition (optional). This allows for filtering
                           on conditions , e.g. when streaming data with a DataSet.
         """
-        assert not self.in_memory, (
-            "It is currently not supported to add data with an in-memory " "database."
-        )
+        assert (
+            not self.in_memory
+        ), "It is currently not supported to add data with an in-memory database."
         # check for supported filetype
         *_, extension = os.path.splitext(data_path)
         # TODO: add more extensions
@@ -189,18 +188,32 @@ class DataBase:
         )
 
         # get the condition id
-        condition_id = (
-            self.cursor.execute(
-                f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
-            ).fetchone()
-            if condition
-            else (0,)
-        )
-        condition_id = condition_id[0] if condition_id else None
+        condition_id = self.cursor.execute(
+            f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
+        ).fetchone()
+        condition_id = condition_id[0] if condition_id else 0
+
+        # # add the condition if necessary
+        # if condition and not condition_id:
+        #     self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}')")
+        # print(condition)
+        # if condition is not None:
+        #     condition = "'" + condition + "'"
+        # else:
+        #     condition = "NULL"
+        #
+        # print(condition)
+        # # get the condition id
+        # condition_id = (
+        #     self.cursor.execute(
+        #         f"SELECT ConditionId FROM Condition WHERE Condition={condition}"
+        #     ).fetchone()
+        # )
+        # condition_id = condition_id[0] if condition_id else None
 
         # add the condition if necessary
         if condition and not condition_id:
-            self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}')")
+            self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, {condition})")
 
         if extension in [".bed", ".narrowPeak"]:
             self._add_bed(data_path, assembly_id, condition_id, extension)
@@ -224,7 +237,7 @@ class DataBase:
             for i, line in enumerate(bedfile):
                 bed = line.strip().split("\t")
                 # print(bed)
-                chromosome_id = self.get_chrom_id(assembly_id, bed[0])
+                chromosome_id = self._get_chrom_id(assembly_id, bed[0])
                 offset = self.cursor.execute(
                     f"SELECT Offset FROM Chromosome "
                     f"WHERE ChromosomeId = {chromosome_id}"
@@ -257,3 +270,6 @@ class DataBase:
 
     def _add_bigwig(self, data_path, assembly_id, condition_id, extension):
         raise NotImplementedError
+
+    def create_index(self):
+        self.cursor.execute("CREATE INDEX idx_Chromosome ON Chromosome (Chromosome)")

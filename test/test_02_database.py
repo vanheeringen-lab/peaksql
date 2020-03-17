@@ -35,20 +35,20 @@ class TestDataBase(unittest.TestCase):
         self.assertEquals(db.assemblies, ["assembly1", "assembly2"])
         self.assertRaises(AssertionError, db.add_assembly, "test/data/assembly1.fa")
 
-    def test_202_test_get_assembly_id(self):
-        db = peaksql.DataBase(DATABASE_BED)
-        self.assertEquals(db.get_assembly_id("assembly1"), 1)
-        self.assertEquals(db.get_assembly_id("assembly2"), 2)
-        self.assertEquals(db.get_assembly_id("assembly2"), 2)
-        self.assertRaises(ValueError, db.get_assembly_id, "assembly3")
+    # def test_202_test_get_assembly_id(self):
+    #     db = peaksql.DataBase(DATABASE_BED)
+    #     self.assertEquals(db.get_assembly_id("assembly1"), 1)
+    #     self.assertEquals(db.get_assembly_id("assembly2"), 2)
+    #     self.assertEquals(db.get_assembly_id("assembly2"), 2)
+    #     self.assertRaises(ValueError, db.get_assembly_id, "assembly3")
 
     def test_203_get_chrom_id(self):
         db = peaksql.DataBase(DATABASE_BED)
-        self.assertEquals(db.get_chrom_id(1, "chr1"), 1)
-        self.assertEquals(db.get_chrom_id(1, "chr2"), 2)
-        self.assertEquals(db.get_chrom_id(2, "chr1"), 3)
-        self.assertEquals(db.get_chrom_id(2, "chr3"), 4)
-        self.assertRaises(ValueError, db.get_chrom_id, 1, 3)
+        self.assertEquals(db._get_chrom_id(1, "chr1"), 1)
+        self.assertEquals(db._get_chrom_id(1, "chr2"), 2)
+        self.assertEquals(db._get_chrom_id(2, "chr1"), 3)
+        self.assertEquals(db._get_chrom_id(2, "chr3"), 4)
+        self.assertRaises(ValueError, db._get_chrom_id, 1, 3)
 
     def test_204_add_bed(self):
         db = peaksql.DataBase(DATABASE_BED)

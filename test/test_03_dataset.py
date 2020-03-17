@@ -38,58 +38,36 @@ class TestDataBase(unittest.TestCase):
 
     def test_303_Bed_label_any(self):
         dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
-        assert all(dataset.label_any(self.positions) == [True, True, False, True])
+        assert all(dataset.any(self.positions) == [True, True, False, True])
 
     def test_304_Bed_label_all(self):
         dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
-        assert all(dataset.label_all(self.positions) == [False, False, False, True])
+        assert all(dataset.all(self.positions) == [False, False, False, True])
 
     def test_305_Bed_label_fraction(self):
         dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
-        dataset.fraction = 0.4
-        assert all(dataset.label_fraction(self.positions) == [False, True, False, True])
+        dataset.ratio = 0.4
+        assert all(dataset.fraction(self.positions) == [False, True, False, True])
 
-    def test_306_Bed_label_inner_any(self):
-        dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
-        dataset.inner_range = 1
-        assert all(dataset.label_any(self.positions) == [True, True, False, True])
-
-    def test_307_Bed_label_inner_all(self):
-        dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
-        dataset.inner_range = 1
-        assert all(
-            dataset.label_inner_all(self.positions) == [False, False, False, True]
-        )
-
-    def test_308_Bed_label_inner_fraction(self):
-        dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
-        dataset.inner_range = 1
-        dataset.fraction = 2 / 3
-        assert all(
-            dataset.label_inner_fraction(self.positions) == [False, True, False, True]
-        )
-
-    def test_309_BedDataSet_array_from_query(self):
-        chromstart = 10
-        chromend = 20
-        chromid = 1
-        query = [[0, 0, 15, 25], [1, 0, 5, 13]]
-        dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
-        assert np.all(
-            dataset.array_from_query(query, chromid, chromstart, chromend)
-            == np.array(
-                [[True, True, True, False, False, False, False, False, False, False]]
-            )
-        )
+    # def test_309_BedDataSet_array_from_query(self):
+    #     chromstart = 10
+    #     chromend = 20
+    #     query = [(0, 15, 25), (0, 5, 13)]
+    #     dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
+    #     assert np.all(
+    #         dataset.array_from_query(query, chromstart, chromend)
+    #         == np.array(
+    #             [[True, True, True, False, False, False, False, False, False, False]]
+    #         )
+    #     )
 
     def test_310_NarrowPeak_array_from_query(self):
         chromstart = 10
         chromend = 20
-        chromid = 1
-        query = [[0, 0, 15, 25], [1, 0, 5, 13]]
+        query = [(0, 15, 25), (0, 5, 13)]
         dataset = peaksql.NarrowPeakDataSet(DATABASE_NWP, seq_length=10, stride=10)
         assert np.all(
-            dataset.array_from_query(query, chromid, chromstart, chromend)
+            dataset.array_from_query(query, chromstart, chromend)
             == np.array(
                 [[False, False, False, False, False, False, False, False, True, False]]
             )
@@ -124,24 +102,24 @@ class TestDataBase(unittest.TestCase):
         for count in un_cumsum[1:]:
             assert 0.245 <= count / 100_000 <= 0.255
 
-    def test_314_Labeler_func_parsing(self):
-        with self.assertRaises(ValueError):
-            peaksql.BedDataSet(
-                DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_any"
-            )
-        with self.assertRaises(ValueError):
-            peaksql.BedDataSet(
-                DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_all"
-            )
-        with self.assertRaises(ValueError):
-            peaksql.BedDataSet(
-                DATABASE_BED,
-                seq_length=10,
-                nr_rand_pos=10,
-                label_func="inner_fraction",
-                fraction=0.8,
-            )
-        with self.assertRaises(ValueError):
-            peaksql.BedDataSet(
-                DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="fraction"
-            )
+    # def test_314_Labeler_func_parsing(self):
+    #     with self.assertRaises(ValueError):
+    #         peaksql.BedDataSet(
+    #             DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_any"
+    #         )
+    #     with self.assertRaises(ValueError):
+    #         peaksql.BedDataSet(
+    #             DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_all"
+    #         )
+    #     with self.assertRaises(ValueError):
+    #         peaksql.BedDataSet(
+    #             DATABASE_BED,
+    #             seq_length=10,
+    #             nr_rand_pos=10,
+    #             label_func="inner_fraction",
+    #             fraction=0.8,
+    #         )
+    #     with self.assertRaises(ValueError):
+    #         peaksql.BedDataSet(
+    #             DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="fraction"
+    #         )

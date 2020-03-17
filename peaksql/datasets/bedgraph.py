@@ -5,9 +5,9 @@ from .labeler import _Labeler
 from .base import _DataSet
 
 
-class NarrowPeakDataSet(_DataSet, _Labeler):
+class BedGraphDataSet(_DataSet, _Labeler):
     """
-    The NarrowPeakDataSet ...
+    The BedGraphDataSet ...
     """
 
     SELECT_LABEL = " Bed.ChromosomeId, Bed.ConditionId, BedVirtual.ChromStart, Bed.Peak"
@@ -15,10 +15,12 @@ class NarrowPeakDataSet(_DataSet, _Labeler):
     def array_from_query(
         self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,
     ) -> np.ndarray:
-        positions = np.zeros((len(self.all_conditions), self.inner_range), dtype=bool)
+        positions = np.zeros(
+            (len(self.all_conditions), chromend - chromstart), dtype=bool
+        )
 
         for condition_id, start, peak in query:
-            peak_idx = int(start - chromstart + peak)
+            peak_idx = start - chromstart + peak
             if 0 <= peak_idx < positions.shape[1]:
                 positions[condition_id, peak_idx] = True
 

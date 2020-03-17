@@ -5,10 +5,11 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
 from ..database import DataBase
+from .labeler import _Labeler
 import peaksql.util as util
 
 
-class _DataSet(ABC):
+class _DataSet(ABC, _Labeler):
     """
     DataSet baseclass.
     """
@@ -18,6 +19,7 @@ class _DataSet(ABC):
         " FROM Chromosome Chr "
         " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
     )
+    SELECT_LABEL: str
 
     def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs):
         # check for valid input
@@ -61,6 +63,8 @@ class _DataSet(ABC):
 
         # mark fetchall for garbage collection (large and we don't need it anymore)
         del self.fetchall
+
+        _Labeler.__init__(self, label_func=kwargs.get("label_func", "any"))
 
     def __len__(self) -> int:
         """
@@ -220,28 +224,26 @@ class _DataSet(ABC):
         """
         Get the label that corresponds to chromstart:chromend.
         """
-        assemblyid = self.database.get_assembly_id(assembly)
-        chromosomeid = self.database.get_chrom_id(assemblyid, chrom)
-
-        offset = self.database.cursor.execute(
-            f"""
-            SELECT Offset FROM Chromosome WHERE ChromosomeId = {chromosomeid}
-            """
-        ).fetchone()[0]
+        offset, chromosomeid = self.database.get_offset_chromosomeid(assembly, chrom)
         chromstart += offset
         chromend += offset
+
+        # if we only want the label of an inner part
+        if hasattr(self, "inner_range"):
+            midpoint = chromstart + self.seq_length // 2
+            chromstart = midpoint - self.inner_range
+            chromend = midpoint + self.inner_range
 
         query = f"""
             SELECT {self.SELECT_LABEL}
             FROM BedVirtual
             INNER JOIN Bed on BedVirtual.BedId = Bed.BedId
-            WHERE ({chromstart} <= BedVirtual.ChromEnd) AND
-                  ({chromend} >= BedVirtual.ChromStart)
+            WHERE ({chromstart} < BedVirtual.ChromEnd) AND
+                  ({chromend} >= BedVirtual.ChromStart) AND
+                  ChromosomeId = {chromosomeid}
         """
         query_result = self.database.cursor.execute(query).fetchall()
-        positions = self.array_from_query(
-            query_result, chromosomeid, chromstart, chromend
-        )
+        positions = self.array_from_query(query_result, chromstart, chromend)
         labels = self.label_from_array(positions)
 
         return labels
@@ -253,11 +255,7 @@ class _DataSet(ABC):
 
     @abstractmethod
     def array_from_query(
-        self,
-        query: List[Tuple[int, int, int, int]],
-        cur_chrom_id: int,
-        chromstart: int,
-        chromend: int,
+        self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,
     ) -> np.ndarray:
         pass
 
