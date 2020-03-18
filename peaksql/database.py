@@ -171,7 +171,6 @@ class DataBase:
             ".narrowPeak",
             ".bdg",
             ".bed",
-            ".bw",
         ], f"The file extension you choose is not supported"
 
         # check if species it belongs to has already been added to the database
@@ -209,16 +208,6 @@ class DataBase:
         ).fetchall()
         converter = {chrom: (chrom_id, offset) for chrom, chrom_id, offset in converter}
 
-        if extension in [".bed", ".narrowPeak", ".bdg"]:
-            self._add_bed(
-                data_path, assembly, assembly_id, condition_id, extension, converter
-            )
-        elif extension in [".bw"]:
-            self._add_bigwig(data_path, assembly_id, condition_id, extension)
-
-    def _add_bed(
-        self, data_path, assembly, assembly_id, condition_id, extension, converter
-    ):
         # get the current BedId we are at
         highest_id_query = self.cursor.execute(
             "SELECT BedId FROM Bed ORDER BY BedId DESC LIMIT 1"
@@ -271,9 +260,6 @@ class DataBase:
         )
 
         self.conn.commit()
-
-    def _add_bigwig(self, data_path, assembly_id, condition_id, extension):
-        raise NotImplementedError
 
     def create_index(self):
         self.cursor.execute("CREATE INDEX idx_Chromosome ON Chromosome (Chromosome)")
