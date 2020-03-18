@@ -8,7 +8,6 @@ class _Labeler:
 
     def __init__(self, **kwargs):
 
-        print(kwargs["label_func"])
         assert "label_func" in kwargs and kwargs["label_func"] in [
             "any",
             "all",
@@ -28,3 +27,6 @@ class _Labeler:
 
     def fraction(self, positions: np.ndarray) -> np.ndarray:
         return np.sum(positions, axis=1) / positions.shape[1] >= self.ratio
+
+    def none(self, position: np.ndarray) -> np.ndarray:
+        return position

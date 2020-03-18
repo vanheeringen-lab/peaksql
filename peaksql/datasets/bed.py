@@ -1,11 +1,10 @@
 import numpy as np
 from typing import List, Tuple
 
-from .labeler import _Labeler
 from .base import _DataSet
 
 
-class BedDataSet(_DataSet, _Labeler):
+class BedDataSet(_DataSet):
     """
     The BedRegion ...
     """

@@ -38,6 +38,7 @@ BED = (
     "    BedId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    ConditionId,"
     "    ChromosomeId NOT NULL,"
+    "    DataValue NUMERIC,"  # bedgraph value
     "    Peak INT,"  # narrowPeak summit
     "    FOREIGN KEY(ChromosomeId) REFERENCES Chromosome(ChromosomeId),"
     "    FOREIGN KEY(ConditionId)  REFERENCES Condition(ConditionId)"

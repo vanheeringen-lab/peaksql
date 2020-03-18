@@ -6,6 +6,8 @@ import os
 from functools import lru_cache
 
 import pyfaidx
+import pandas as pd
+import numpy as np
 
 import peaksql.tables as tables
 
@@ -147,6 +149,8 @@ class DataBase:
         # clean up after yourself
         self.conn.commit()
 
+        # self.create_index()
+
     def add_data(self, data_path: str, assembly: str, condition: str = None):
         """
         Add data (bed or narrowPeak) to the database. The files are stored line by line
@@ -165,6 +169,7 @@ class DataBase:
         # TODO: add more extensions
         assert extension in [
             ".narrowPeak",
+            ".bdg",
             ".bed",
             ".bw",
         ], f"The file extension you choose is not supported"
@@ -193,77 +198,73 @@ class DataBase:
         ).fetchone()
         condition_id = condition_id[0] if condition_id else 0
 
-        # # add the condition if necessary
-        # if condition and not condition_id:
-        #     self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}')")
-        # print(condition)
-        # if condition is not None:
-        #     condition = "'" + condition + "'"
-        # else:
-        #     condition = "NULL"
-        #
-        # print(condition)
-        # # get the condition id
-        # condition_id = (
-        #     self.cursor.execute(
-        #         f"SELECT ConditionId FROM Condition WHERE Condition={condition}"
-        #     ).fetchone()
-        # )
-        # condition_id = condition_id[0] if condition_id else None
-
         # add the condition if necessary
         if condition and not condition_id:
             self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, {condition})")
 
-        if extension in [".bed", ".narrowPeak"]:
-            self._add_bed(data_path, assembly_id, condition_id, extension)
+        # get the
+        converter = self.cursor.execute(
+            f"SELECT Chromosome, ChromosomeId, Offset FROM Chromosome "
+            f"WHERE AssemblyId='{assembly_id}'"
+        ).fetchall()
+        converter = {chrom: (chrom_id, offset) for chrom, chrom_id, offset in converter}
+
+        if extension in [".bed", ".narrowPeak", ".bdg"]:
+            self._add_bed(
+                data_path, assembly, assembly_id, condition_id, extension, converter
+            )
         elif extension in [".bw"]:
             self._add_bigwig(data_path, assembly_id, condition_id, extension)
 
-    def _add_bed(self, data_path, assembly_id, condition_id, extension):
-        bed_lines = []
-        virt_lines = []
-
+    def _add_bed(
+        self, data_path, assembly, assembly_id, condition_id, extension, converter
+    ):
         # get the current BedId we are at
         highest_id = self.cursor.execute(
             "SELECT BedId FROM Bed ORDER BY BedId DESC LIMIT 1"
         ).fetchone()
         if not highest_id:
-            highest_id = 0
+            highest_id = 1
         else:
-            highest_id = highest_id[0]
+            highest_id = highest_id[0] + 1
 
-        with open(data_path) as bedfile:
-            for i, line in enumerate(bedfile):
-                bed = line.strip().split("\t")
-                # print(bed)
-                chromosome_id = self._get_chrom_id(assembly_id, bed[0])
-                offset = self.cursor.execute(
-                    f"SELECT Offset FROM Chromosome "
-                    f"WHERE ChromosomeId = {chromosome_id}"
-                ).fetchone()[0]
+        bed = pd.read_csv(data_path, sep="\t", header=None).rename(
+            columns={1: "chromstart", 2: "chromend"}
+        )
+        bed["condition_id"] = condition_id
+        bed["None"] = None
+        bed["bedid"] = np.arange(highest_id, highest_id + bed.shape[0])
+        bed[["chromosome_id", "offset"]] = pd.DataFrame(
+            [converter[chromname] for chromname in bed[0]]
+        )
+        bed["chromstart"] += bed["offset"]
+        bed["chromend"] += bed["offset"]
 
-                chromstart, chromend = bed[1:3]
-                chromstart = int(chromstart) + offset
-                chromend = int(chromend) + offset
-                virt_lines.append((i + 1 + highest_id, chromstart, chromend))
+        virt_lines = bed[["bedid", "chromstart", "chromend"]].values.tolist()
+        if extension == ".bed":
+            bed_lines = bed[
+                ["condition_id", "chromosome_id", "None", "None"]
+            ].values.tolist()
+        elif extension == ".narrowPeak":
+            bed_lines = bed[
+                ["condition_id", "chromosome_id", "None", 9]
+            ].values.tolist()
+        elif extension == ".bdg":
+            bed_lines = bed[
+                ["condition_id", "chromosome_id", 3, "None"]
+            ].values.tolist()
+        else:
+            fields = {".bed": 3, ".narrowPeak": 10, "bdg": 4}
+            assert False, (
+                f"Extension {extension} should have {fields[extension]} fields,"
+                f" however it has {len(fields)}"
+            )
 
-                if len(bed) == 3 and extension == ".bed":
-                    bed_lines.append((condition_id, chromosome_id, None))
-                elif len(bed) == 10 and extension == ".narrowPeak":
-                    bed_lines.append((condition_id, chromosome_id, bed[9]))
-                else:
-                    fields = {".bed": 3, ".narrowPeak": 10}
-                    assert False, (
-                        f"Extension {extension} should have {fields[extension]} fields,"
-                        f" however it has {len(fields)}"
-                    )
-
-        self.cursor.executemany(f"INSERT INTO Bed VALUES(NULL, ?, ?, ?)", bed_lines)
+        self.cursor.executemany("INSERT INTO Bed VALUES(NULL, ?, ?, ?, ?)", bed_lines)
 
         # also add each bed entry to the BedVirtual table
         self.cursor.executemany(
-            f"INSERT INTO BedVirtual VALUES(?, ?, ?)", virt_lines,
+            "INSERT INTO BedVirtual VALUES(?, ?, ?)", virt_lines,
         )
 
         self.conn.commit()

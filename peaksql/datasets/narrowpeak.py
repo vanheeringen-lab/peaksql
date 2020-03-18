@@ -1,11 +1,10 @@
 import numpy as np
 from typing import List, Tuple
 
-from .labeler import _Labeler
 from .base import _DataSet
 
 
-class NarrowPeakDataSet(_DataSet, _Labeler):
+class NarrowPeakDataSet(_DataSet):
     """
     The NarrowPeakDataSet ...
     """
