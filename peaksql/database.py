@@ -220,19 +220,22 @@ class DataBase:
         self, data_path, assembly, assembly_id, condition_id, extension, converter
     ):
         # get the current BedId we are at
-        highest_id = self.cursor.execute(
+        highest_id_query = self.cursor.execute(
             "SELECT BedId FROM Bed ORDER BY BedId DESC LIMIT 1"
         ).fetchone()
-        if not highest_id:
-            highest_id = 1
-        else:
-            highest_id = highest_id[0] + 1
 
+        highest_id = 1
+        if highest_id_query is not None:
+            highest_id += highest_id_query[0]
+
+        # read the bed(like) file
         bed = pd.read_csv(data_path, sep="\t", header=None).rename(
             columns={1: "chromstart", 2: "chromend"}
         )
-        bed["condition_id"] = condition_id
+
+        # now set the values that go into our db
         bed["None"] = None
+        bed["condition_id"] = condition_id
         bed["bedid"] = np.arange(highest_id, highest_id + bed.shape[0])
         bed[["chromosome_id", "offset"]] = pd.DataFrame(
             [converter[chromname] for chromname in bed[0]]
@@ -240,7 +243,6 @@ class DataBase:
         bed["chromstart"] += bed["offset"]
         bed["chromend"] += bed["offset"]
 
-        virt_lines = bed[["bedid", "chromstart", "chromend"]].values.tolist()
         if extension == ".bed":
             bed_lines = bed[
                 ["condition_id", "chromosome_id", "None", "None"]
@@ -263,6 +265,7 @@ class DataBase:
         self.cursor.executemany("INSERT INTO Bed VALUES(NULL, ?, ?, ?, ?)", bed_lines)
 
         # also add each bed entry to the BedVirtual table
+        virt_lines = bed[["bedid", "chromstart", "chromend"]].values.tolist()
         self.cursor.executemany(
             "INSERT INTO BedVirtual VALUES(?, ?, ?)", virt_lines,
         )
