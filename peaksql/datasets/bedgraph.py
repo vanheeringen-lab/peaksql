@@ -10,12 +10,12 @@ class BedGraphDataSet(_DataSet):
     """
 
     SELECT_LABEL = (
-        " Bed.ConditionId, BedVirtual.ChromStart, Bed.ChromEnd, Bed.DataValue "
+        " Bed.ConditionId, BedVirtual.ChromStart, BedVirtual.ChromEnd, Bed.DataValue "
     )
 
-    def __init__(self, **kwargs):
-        _DataSet.__init__(self, **kwargs)
-        self.label_from_array = self.none
+    def __init__(self, *args, **kwargs):
+        kwargs.update({"label_func": "none"})
+        _DataSet.__init__(self, *args, **kwargs)
 
     def array_from_query(
         self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,
@@ -24,15 +24,32 @@ class BedGraphDataSet(_DataSet):
             (len(self.all_conditions), chromend - chromstart), dtype=float
         )
 
-        for condition_id, start, end, value in query:
-            min_idx = int(start - chromstart)
-            if min_idx < 0:
-                min_idx = 0
+        # for condition_id, start, end, value in query:
+        #     min_idx = int(start - chromstart)
+        #     if min_idx < 0:
+        #         min_idx = 0
+        #
+        #     max_idx = int(end - chromstart)
+        #     if max_idx > positions.shape[1]:
+        #         max_idx = positions.shape[1]
+        #
+        #     positions[condition_id, min_idx:max_idx] = value
 
-            max_idx = int(end - chromstart)
-            if max_idx > positions.shape[1]:
-                max_idx = positions.shape[1]
+        if len(query):
+            condition, min_idx, max_idx, value = np.split(np.array(query), 4, axis=1)
+            min_idx -= chromstart
+            max_idx -= chromstart
+            min_idx[min_idx < 0] = 0
+            max_idx[max_idx > positions.shape[1]] = positions.shape[1]
+            condition = condition.astype(int).flatten()
+            min_idx = min_idx.astype(int).flatten()
+            max_idx = max_idx.astype(int).flatten()
+            value = value.flatten()
 
-            positions[condition_id, min_idx:max_idx] = value
+            print(min_idx)
+            print(max_idx)
+            print(value)
+            positions[condition, min_idx:max_idx] = value
+            # positions[query[:, 0].astype(int), query[:, 1].astype(int):query[:, 2].astype(int)] = query[:, 3]
 
         return positions

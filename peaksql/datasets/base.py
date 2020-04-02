@@ -236,12 +236,12 @@ class _DataSet(ABC, _Labeler):
 
         query = f"""
             SELECT {self.SELECT_LABEL}
-            FROM BedVirtual
+            FROM BedVirtual_{assembly}
             INNER JOIN Bed on BedVirtual.BedId = Bed.BedId
             WHERE ({chromstart} < BedVirtual.ChromEnd) AND
                   ({chromend} >= BedVirtual.ChromStart) AND
                   ChromosomeId = {chromosomeid}
-        """
+        """  # chromosomeId necessary?
         query_result = self.database.cursor.execute(query).fetchall()
         positions = self.array_from_query(query_result, chromstart, chromend)
         labels = self.label_from_array(positions)

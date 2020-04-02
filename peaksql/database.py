@@ -146,14 +146,19 @@ class DataBase:
             )
             offset += size
 
+        self.cursor.execute(
+            f"CREATE VIRTUAL TABLE BedVirtual_{assembly} USING rtree_i32("
+            f"    BedId INT,"
+            f"    ChromStart INT,"
+            f"    ChromEnd INT,"
+            f")"
+        )
         # clean up after yourself
         self.conn.commit()
 
-        # self.create_index()
-
     def add_data(self, data_path: str, assembly: str, condition: str = None):
         """
-        Add data (bed or narrowPeak) to the database. The files are stored line by line
+        Add data (bed, narrowPeak, or bedgraph) to the database.
 
         :param data_path: The path to the assembly file.
         :param assembly: The name of the assembly. Requires the assembly to be added to
@@ -256,7 +261,7 @@ class DataBase:
         # also add each bed entry to the BedVirtual table
         virt_lines = bed[["bedid", "chromstart", "chromend"]].values.tolist()
         self.cursor.executemany(
-            "INSERT INTO BedVirtual VALUES(?, ?, ?)", virt_lines,
+            f"INSERT INTO BedVirtual_{assembly} VALUES(?, ?, ?)", virt_lines,
         )
 
         self.conn.commit()

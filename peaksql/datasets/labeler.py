@@ -12,6 +12,7 @@ class _Labeler:
             "any",
             "all",
             "fraction",
+            "none"
         ]
 
         self.inner_range = kwargs.get("inner_range", self.seq_length)
