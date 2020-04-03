@@ -49,19 +49,19 @@ class TestDataBase(unittest.TestCase):
         dataset.ratio = 0.4
         assert all(dataset.fraction(self.positions) == [False, True, False, True])
 
-    # def test_309_BedDataSet_array_from_query(self):
-    #     chromstart = 10
-    #     chromend = 20
-    #     query = [(0, 15, 25), (0, 5, 13)]
-    #     dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
-    #     assert np.all(
-    #         dataset.array_from_query(query, chromstart, chromend)
-    #         == np.array(
-    #             [[True, True, True, False, False, False, False, False, False, False]]
-    #         )
-    #     )
+    def test_306_BedDataSet_array_from_query(self):
+        chromstart = 10
+        chromend = 20
+        query = [(0, 15, 25), (0, 5, 13)]
+        dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, stride=10)
+        assert np.all(
+            dataset.array_from_query(query, chromstart, chromend)
+            == np.array(
+                [[True, True, True, False, False, True, True, True, True, True]]
+            )
+        )
 
-    def test_310_NarrowPeak_array_from_query(self):
+    def test_307_NarrowPeak_array_from_query(self):
         chromstart = 10
         chromend = 20
         query = [(0, 15, 25), (0, 5, 13)]
@@ -73,11 +73,11 @@ class TestDataBase(unittest.TestCase):
             )
         )
 
-    def test_311_BedDataSet_random_pos_length(self):
+    def test_308_BedDataSet_random_pos_length(self):
         dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, nr_rand_pos=20)
         assert len(dataset) == 20
 
-    def test_312_BedDataSet_random_pos_sequences(self):
+    def test_309_BedDataSet_random_pos_sequences(self):
         dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, nr_rand_pos=20)
         all_dna = [
             "AAAACCCCGGGGTTTTAAACCCGGGTTTAACCGGTTACGT",
@@ -94,32 +94,10 @@ class TestDataBase(unittest.TestCase):
                         found = True
             assert found
 
-    def test_313_BedDataSet_random_pos_distribution(self):
+    def test_310_BedDataSet_random_pos_distribution(self):
         dataset = peaksql.BedDataSet(DATABASE_BED, seq_length=10, nr_rand_pos=100_000)
 
         # chromosomes are of equal size, so we expect equal nr of positions for each
         un_cumsum = dataset.cumsum - np.roll(dataset.cumsum, shift=1)
         for count in un_cumsum[1:]:
             assert 0.245 <= count / 100_000 <= 0.255
-
-    # def test_314_Labeler_func_parsing(self):
-    #     with self.assertRaises(ValueError):
-    #         peaksql.BedDataSet(
-    #             DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_any"
-    #         )
-    #     with self.assertRaises(ValueError):
-    #         peaksql.BedDataSet(
-    #             DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="inner_all"
-    #         )
-    #     with self.assertRaises(ValueError):
-    #         peaksql.BedDataSet(
-    #             DATABASE_BED,
-    #             seq_length=10,
-    #             nr_rand_pos=10,
-    #             label_func="inner_fraction",
-    #             fraction=0.8,
-    #         )
-    #     with self.assertRaises(ValueError):
-    #         peaksql.BedDataSet(
-    #             DATABASE_BED, seq_length=10, nr_rand_pos=10, label_func="fraction"
-    #         )

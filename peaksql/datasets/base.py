@@ -244,7 +244,6 @@ class _DataSet(ABC, _Labeler):
         """.format(
             assembly=assembly
         )
-        print(query)
         query_result = self.database.cursor.execute(query).fetchall()
         positions = self.array_from_query(query_result, chromstart, chromend)
         labels = self.label_from_array(positions)

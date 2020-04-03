@@ -5,4 +5,11 @@ from .datasets.bed import BedDataSet
 from .datasets.bedgraph import BedGraphDataSet
 from .datasets.narrowpeak import NarrowPeakDataSet
 
-__all__ = ["database", "util", "DataBase", "NarrowPeakDataSet", "BedDataSet", "BedGraphDataSet"]
+__all__ = [
+    "database",
+    "util",
+    "DataBase",
+    "NarrowPeakDataSet",
+    "BedDataSet",
+    "BedGraphDataSet",
+]
