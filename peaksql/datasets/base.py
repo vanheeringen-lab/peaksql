@@ -38,8 +38,8 @@ class _DataSet(ABC, _Labeler):
         query = (
             self.SELECT_CHROM_ASS + self.FROM + self.WHERE + " ORDER BY ChromosomeId"
         )
-        self.database.cursor.execute(query)
-        self.fetchall = self.database.cursor.fetchall()
+        self._database.cursor.execute(query)
+        self.fetchall = self._database.cursor.fetchall()
 
         # get the genomic positions of our indices
         if "stride" in kwargs:
@@ -56,7 +56,7 @@ class _DataSet(ABC, _Labeler):
         # get all the conditions and their id in the database
         self.all_conditions = {
             k: v
-            for k, v in self.database.cursor.execute(
+            for k, v in self._database.cursor.execute(
                 "SELECT DISTINCT Condition, ConditionId FROM Condition"
             ).fetchall()
         }
@@ -72,7 +72,7 @@ class _DataSet(ABC, _Labeler):
         """
         return self.cumsum[-1]
 
-    def __getitem__(self, index: int) -> Tuple[np.array, int]:
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the sequence in one-hot encoding and the label of the corresponding
         index.
@@ -142,7 +142,7 @@ class _DataSet(ABC, _Labeler):
         non_empty_combis = [(None, None)]
         for assembly, chrom in combis[1:]:
             positions = np.arange(
-                0, len(self.database.fastas[assembly][chrom]) - seq_length + 1, stride
+                0, len(self._database.fastas[assembly][chrom]) - seq_length + 1, stride
             )
             if len(positions):
                 non_empty_combis.append((assembly, chrom))
@@ -170,13 +170,13 @@ class _DataSet(ABC, _Labeler):
         combis = [(None, None)] + [
             (assembly, chrom)
             for assembly, chrom, *_ in self.fetchall
-            if len(self.database.fastas[assembly][chrom]) > seq_length
+            if len(self._database.fastas[assembly][chrom]) > seq_length
         ]
 
         # distribute the positions over the chromosomes
         sizes = []
         for assembly, chrom in combis[1:]:
-            sizes.append(len(self.database.fastas[assembly][chrom]))
+            sizes.append(len(self._database.fastas[assembly][chrom]))
 
         distribution = np.random.choice(
             range(len(sizes)), size=nr_rand_pos, p=np.array(sizes) / np.sum(sizes)
@@ -194,7 +194,7 @@ class _DataSet(ABC, _Labeler):
                 startpos.append(
                     np.random.randint(
                         0,
-                        len(self.database.fastas[assembly][chrom]) - seq_length,
+                        len(self._database.fastas[assembly][chrom]) - seq_length,
                         size=counts[where[0][0]],
                     )
                 )
@@ -211,9 +211,7 @@ class _DataSet(ABC, _Labeler):
         Get the one-hot encoded sequence based on the assembly, chromosome, chromstart
         and chromend.
         """
-        process = self._get_process()
-
-        seq = self.databases[process].fastas[assembly][chrom][chromstart:chromend]
+        seq = self._database.fastas[assembly][chrom][chromstart:chromend]
         seq = util.sequence_to_onehot(seq)
 
         return seq
@@ -224,7 +222,7 @@ class _DataSet(ABC, _Labeler):
         """
         Get the label that corresponds to chromstart:chromend.
         """
-        offset, chromosomeid = self.database.get_offset_chromosomeid(assembly, chrom)
+        offset, chromosomeid = self._database.get_offset_chromosomeid(assembly, chrom)
         chromstart += offset
         chromend += offset
 
@@ -244,14 +242,14 @@ class _DataSet(ABC, _Labeler):
         """.format(
             assembly=assembly
         )
-        query_result = self.database.cursor.execute(query).fetchall()
+        query_result = self._database.cursor.execute(query).fetchall()
         positions = self.array_from_query(query_result, chromstart, chromend)
         labels = self.label_from_array(positions)
 
         return labels
 
     @property
-    def database(self):
+    def _database(self):
         process = self._get_process()
         return self.databases[process]
 

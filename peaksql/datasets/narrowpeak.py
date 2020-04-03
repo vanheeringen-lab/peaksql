@@ -6,7 +6,7 @@ from .base import _DataSet
 
 class NarrowPeakDataSet(_DataSet):
     """
-    The NarrowPeakDataSet ...
+    The NarrowPeakDataSet expects that narrowPeak files have been added to the DataBase.
     """
 
     SELECT_LABEL = (

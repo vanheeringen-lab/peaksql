@@ -33,7 +33,7 @@ source_suffix = [".rst", ".md"]
 
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
-    exclusions = ["FROM", "SELECT_CHROM_ASS"]
+    exclusions = ["FROM", "SELECT_CHROM_ASS", "SELECT_LABEL"]
     exclude = name in exclusions
     return skip or exclude
 
