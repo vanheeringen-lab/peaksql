@@ -35,56 +35,52 @@ class TestDataBase(unittest.TestCase):
         self.assertEquals(db.assemblies, ["assembly1", "assembly2"])
         self.assertRaises(AssertionError, db.add_assembly, "test/data/assembly1.fa")
 
-    def test_202_test_get_assembly_id(self):
+    def test_202_get_chrom_id(self):
         db = peaksql.DataBase(DATABASE_BED)
-        self.assertEquals(db.get_assembly_id("assembly1"), 1)
-        self.assertEquals(db.get_assembly_id("assembly2"), 2)
-        self.assertEquals(db.get_assembly_id("assembly2"), 2)
-        self.assertRaises(ValueError, db.get_assembly_id, "assembly3")
+        self.assertEquals(db._get_chrom_id(1, "chr1"), 1)
+        self.assertEquals(db._get_chrom_id(1, "chr2"), 2)
+        self.assertEquals(db._get_chrom_id(2, "chr1"), 3)
+        self.assertEquals(db._get_chrom_id(2, "chr3"), 4)
+        self.assertRaises(ValueError, db._get_chrom_id, 1, 3)
 
-    def test_203_get_chrom_id(self):
-        db = peaksql.DataBase(DATABASE_BED)
-        self.assertEquals(db.get_chrom_id(1, "chr1"), 1)
-        self.assertEquals(db.get_chrom_id(1, "chr2"), 2)
-        self.assertEquals(db.get_chrom_id(2, "chr1"), 3)
-        self.assertEquals(db.get_chrom_id(2, "chr3"), 4)
-        self.assertRaises(ValueError, db.get_chrom_id, 1, 3)
-
-    def test_204_add_bed(self):
+    def test_203_add_bed(self):
         db = peaksql.DataBase(DATABASE_BED)
         db.add_data("test/data/assembly1.bed", "assembly1")
         db.add_data("test/data/assembly2.bed", "assembly2")
         assert db.cursor.execute("SELECT COUNT(BedId) FROM Bed").fetchone() == (3,)
-        assert db.cursor.execute("SELECT COUNT(BedId) FROM BedVirtual").fetchone() == (
-            3,
-        )
+        assert db.cursor.execute(
+            "SELECT COUNT(BedId) FROM BedVirtual_assembly1"
+        ).fetchone() == (1,)
+        assert db.cursor.execute(
+            "SELECT COUNT(BedId) FROM BedVirtual_assembly2"
+        ).fetchone() == (2,)
         assert db.cursor.execute(
             "SELECT Chromosome, ChromStart - Offset, ChromEnd - Offset "
             "FROM BED B "
             "JOIN Chromosome C on B.ChromosomeId = C.ChromosomeId "
-            "JOIN BedVirtual BV on BV.BedId = B.BedId "
+            "JOIN BedVirtual_assembly2 BV on BV.BedId = B.BedId "
             "JOIN Assembly A on C.AssemblyId = A.AssemblyId "
-            "WHERE Assembly='assembly2' and Chromosome='chr1'"
+            "WHERE Chromosome='chr1'"
         ).fetchall() == [("chr1", 20, 40)]
 
-    def test_205_add_narrowpeak(self):
+    def test_204_add_narrowpeak(self):
         db = peaksql.DataBase(DATABASE_NWP)
         db.add_assembly("test/data/assembly1.fa")
         db.add_data("test/data/assembly1.narrowPeak", "assembly1")
         assert db.cursor.execute("SELECT COUNT(BedId) FROM Bed").fetchone() == (4,)
-        assert db.cursor.execute("SELECT COUNT(BedId) FROM BedVirtual").fetchone() == (
-            4,
-        )
+        assert db.cursor.execute(
+            "SELECT COUNT(BedId) FROM BedVirtual_assembly1"
+        ).fetchone() == (4,)
         assert db.cursor.execute(
             "SELECT Chromosome, ChromStart - Offset, ChromEnd - Offset "
             "FROM BED B "
             "JOIN Chromosome C on B.ChromosomeId = C.ChromosomeId "
-            "JOIN BedVirtual BV on BV.BedId = B.BedId "
+            "JOIN BedVirtual_assembly1 BV on BV.BedId = B.BedId "
             "JOIN Assembly A on C.AssemblyId = A.AssemblyId "
-            "WHERE Assembly='assembly1' and Chromosome='chr1'"
+            "WHERE Chromosome='chr1'"
         ).fetchall() == [("chr1", 0, 10), ("chr1", 20, 30)]
 
-    def test_206_in_memory(self):
+    def test_205_in_memory(self):
         db_file = peaksql.DataBase(DATABASE_BED, in_memory=False)
         db_memo = peaksql.DataBase(DATABASE_BED, in_memory=True)
 

@@ -1,7 +1,15 @@
 # make sure that relevant stuff is importable
 from . import database, util
 from .database import DataBase
+from .datasets.bed import BedDataSet
+from .datasets.bedgraph import BedGraphDataSet
 from .datasets.narrowpeak import NarrowPeakDataSet
-from .datasets.bedregion import BedRegionDataSet
 
-__all__ = ["database", "util", "DataBase", "NarrowPeakDataSet", "BedRegionDataSet"]
+__all__ = [
+    "database",
+    "util",
+    "DataBase",
+    "NarrowPeakDataSet",
+    "BedDataSet",
+    "BedGraphDataSet",
+]

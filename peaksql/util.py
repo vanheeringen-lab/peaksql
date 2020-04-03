@@ -1,4 +1,3 @@
-# TODO: random seed + tests
 import numba
 import numpy as np
 
