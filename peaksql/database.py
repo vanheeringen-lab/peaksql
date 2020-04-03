@@ -3,6 +3,8 @@ import os
 from functools import lru_cache
 
 import pyfaidx
+import pandas as pd
+import numpy as np
 
 import peaksql.tables as tables
 
@@ -71,7 +73,7 @@ class DataBase:
         raise ValueError(f"Assembly {assembly_name} is not present in the database")
 
     @lru_cache(maxsize=2 ** 16)
-    def get_chrom_id(self, assembly_id: int, chrom_name: str) -> int:
+    def _get_chrom_id(self, assembly_id: int, chrom_name: str) -> int:
         """
         Get the ChromosomeId based on assemblyId and Chromosome (name).
 
@@ -90,6 +92,19 @@ class DataBase:
         raise ValueError(
             f"No chromosome {chrom_name} for assembly with assembly id {assembly_id}"
         )
+
+    @lru_cache(maxsize=2 ** 16)
+    def get_offset_chromosomeid(self, assembly_name, chrom_name):
+        """
+        Get the offset and chromosomeid based on assembly and chromosome name.
+        """
+        return self.cursor.execute(
+            f"""
+            SELECT Offset, ChromosomeId FROM Chromosome
+            INNER JOIN Assembly ON Assembly.AssemblyId = Chromosome.AssemblyId
+            WHERE Chromosome='{chrom_name}' AND Assembly='{assembly_name}'
+            """
+        ).fetchone()
 
     @property
     def assemblies(self):
@@ -155,12 +170,19 @@ class DataBase:
             )
             offset += size
 
+        self.cursor.execute(
+            f"CREATE VIRTUAL TABLE BedVirtual_{assembly} USING rtree_i32("
+            f"    BedId INT,"
+            f"    ChromStart INT,"
+            f"    ChromEnd INT,"
+            f")"
+        )
         # clean up after yourself
         self.conn.commit()
 
     def add_data(self, data_path: str, assembly: str, condition: str = None):
         """
-        Add data (bed or narrowPeak) to the database. The files are stored line by line
+        Add data (bed, narrowPeak, or bedgraph) to the database.
 
         :param data_path: The path to the assembly file.
         :param assembly: The name of the assembly. Requires the assembly to be added to
@@ -168,16 +190,16 @@ class DataBase:
         :param condition: Experimental condition (optional). This allows for filtering
             on conditions , e.g. when streaming data with a DataSet.
         """
-        assert not self.in_memory, (
-            "It is currently not supported to add data with an in-memory " "database."
-        )
+        assert (
+            not self.in_memory
+        ), "It is currently not supported to add data with an in-memory database."
         # check for supported filetype
         *_, extension = os.path.splitext(data_path)
         # TODO: add more extensions
         assert extension in [
             ".narrowPeak",
+            ".bdg",
             ".bed",
-            ".bw",
         ], f"The file extension you choose is not supported"
 
         # check if species it belongs to has already been added to the database
@@ -199,71 +221,76 @@ class DataBase:
         )
 
         # get the condition id
-        condition_id = (
-            self.cursor.execute(
-                f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
-            ).fetchone()
-            if condition
-            else (0,)
-        )
-        condition_id = condition_id[0] if condition_id else None
+        condition_id = self.cursor.execute(
+            f"SELECT ConditionId FROM Condition WHERE Condition='{condition}'"
+        ).fetchone()
+        condition_id = condition_id[0] if condition_id else 0
 
         # add the condition if necessary
         if condition and not condition_id:
-            self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, '{condition}')")
+            self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, {condition})")
 
-        if extension in [".bed", ".narrowPeak"]:
-            self._add_bed(data_path, assembly_id, condition_id, extension)
-        elif extension in [".bw"]:
-            self._add_bigwig(data_path, assembly_id, condition_id, extension)
-
-    def _add_bed(self, data_path, assembly_id, condition_id, extension):
-        bed_lines = []
-        virt_lines = []
+        # get the
+        _converter = self.cursor.execute(
+            f"SELECT Chromosome, ChromosomeId, Offset FROM Chromosome "
+            f"WHERE AssemblyId='{assembly_id}'"
+        ).fetchall()
+        converter = {
+            chrom: (chrom_id, offset) for chrom, chrom_id, offset in _converter
+        }
 
         # get the current BedId we are at
-        highest_id = self.cursor.execute(
+        highest_id_query = self.cursor.execute(
             "SELECT BedId FROM Bed ORDER BY BedId DESC LIMIT 1"
         ).fetchone()
-        if not highest_id:
-            highest_id = 0
+
+        highest_id = 1
+        if highest_id_query is not None:
+            highest_id += highest_id_query[0]
+
+        # read the bed(like) file
+        bed = pd.read_csv(data_path, sep="\t", header=None).rename(
+            columns={1: "chromstart", 2: "chromend"}
+        )
+
+        # now set the values that go into our db
+        bed["None"] = None
+        bed["condition_id"] = condition_id
+        bed["bedid"] = np.arange(highest_id, highest_id + bed.shape[0])
+        bed[["chromosome_id", "offset"]] = pd.DataFrame(
+            [converter[chromname] for chromname in bed[0]]
+        )
+        bed["chromstart"] += bed["offset"]
+        bed["chromend"] += bed["offset"]
+
+        if extension == ".bed":
+            bed_lines = bed[
+                ["condition_id", "chromosome_id", "None", "None"]
+            ].values.tolist()
+        elif extension == ".narrowPeak":
+            bed_lines = bed[
+                ["condition_id", "chromosome_id", "None", 9]
+            ].values.tolist()
+        elif extension == ".bdg":
+            bed_lines = bed[
+                ["condition_id", "chromosome_id", 3, "None"]
+            ].values.tolist()
         else:
-            highest_id = highest_id[0]
+            fields = {".bed": 3, ".narrowPeak": 10, "bdg": 4}
+            assert False, (
+                f"Extension {extension} should have {fields[extension]} fields,"
+                f" however it has {len(fields)}"
+            )
 
-        with open(data_path) as bedfile:
-            for i, line in enumerate(bedfile):
-                bed = line.strip().split("\t")
-                # print(bed)
-                chromosome_id = self.get_chrom_id(assembly_id, bed[0])
-                offset = self.cursor.execute(
-                    f"SELECT Offset FROM Chromosome "
-                    f"WHERE ChromosomeId = {chromosome_id}"
-                ).fetchone()[0]
-
-                chromstart, chromend = bed[1:3]
-                chromstart = int(chromstart) + offset
-                chromend = int(chromend) + offset
-                virt_lines.append((i + 1 + highest_id, chromstart, chromend))
-
-                if len(bed) == 3 and extension == ".bed":
-                    bed_lines.append((condition_id, chromosome_id, None))
-                elif len(bed) == 10 and extension == ".narrowPeak":
-                    bed_lines.append((condition_id, chromosome_id, bed[9]))
-                else:
-                    fields = {".bed": 3, ".narrowPeak": 10}
-                    assert False, (
-                        f"Extension {extension} should have {fields[extension]} fields,"
-                        f" however it has {len(fields)}"
-                    )
-
-        self.cursor.executemany(f"INSERT INTO Bed VALUES(NULL, ?, ?, ?)", bed_lines)
+        self.cursor.executemany("INSERT INTO Bed VALUES(NULL, ?, ?, ?, ?)", bed_lines)
 
         # also add each bed entry to the BedVirtual table
+        virt_lines = bed[["bedid", "chromstart", "chromend"]].values.tolist()
         self.cursor.executemany(
-            f"INSERT INTO BedVirtual VALUES(?, ?, ?)", virt_lines,
+            f"INSERT INTO BedVirtual_{assembly} VALUES(?, ?, ?)", virt_lines,
         )
 
         self.conn.commit()
 
-    def _add_bigwig(self, data_path, assembly_id, condition_id, extension):
-        raise NotImplementedError
+    def create_index(self):
+        self.cursor.execute("CREATE INDEX idx_Chromosome ON Chromosome (Chromosome)")

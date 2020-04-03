@@ -33,8 +33,8 @@ data = "binding_sites.bed"
 
 # load data into database
 db = peaksql.database.DataBase(db_file)
-db.add_assembly(assembly, assembly="hg19", species="human")
-db.add_data(intervals_file, assembly="hg19")
+db.add_assembly(assembly, assembly="hg38", species="human")
+db.add_data(data, assembly="data")
 
 # now load as dataset
 dataset = peaksql.BedRegionDataSet(db_file, seq_length=101, stride=200)

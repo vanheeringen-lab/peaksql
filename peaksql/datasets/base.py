@@ -2,13 +2,14 @@ import numpy as np
 import multiprocessing
 import threading
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from ..database import DataBase
+from .labeler import _Labeler
 import peaksql.util as util
 
 
-class _DataSet(ABC):
+class _DataSet(ABC, _Labeler):
     """
     DataSet baseclass.
     """
@@ -18,6 +19,7 @@ class _DataSet(ABC):
         " FROM Chromosome Chr "
         " INNER JOIN Assembly Ass  ON Chr.AssemblyId   = Ass.AssemblyId "
     )
+    SELECT_LABEL: str
 
     def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs):
         # check for valid input
@@ -61,6 +63,8 @@ class _DataSet(ABC):
 
         # mark fetchall for garbage collection (large and we don't need it anymore)
         del self.fetchall
+
+        _Labeler.__init__(self, label_func=kwargs.get("label_func", "any"))
 
     def __len__(self) -> int:
         """
@@ -207,26 +211,53 @@ class _DataSet(ABC):
         Get the one-hot encoded sequence based on the assembly, chromosome, chromstart
         and chromend.
         """
-        process = self._get_process()
-
-        seq = self.databases[process].fastas[assembly][chrom][chromstart:chromend]
+        seq = self._database.fastas[assembly][chrom][chromstart:chromend]
         seq = util.sequence_to_onehot(seq)
 
         return seq
 
-    @abstractmethod
     def get_label(
         self, assembly: str, chrom: str, chromstart: int, chromend: int
     ) -> np.ndarray:
         """
-        Get the label belonging to the combination of assembly, chromosome, chromstart,
-        and chromend.
-
-        This function is overwritten by each DataSet to apply DataSet specific logic.
+        Get the label that corresponds to chromstart:chromend.
         """
-        pass
+        offset, chromosomeid = self._database.get_offset_chromosomeid(assembly, chrom)
+        chromstart += offset
+        chromend += offset
+
+        # if we only want the label of an inner part
+        if hasattr(self, "inner_range"):
+            midpoint = chromstart + self.seq_length // 2
+            chromstart = midpoint - self.inner_range
+            chromend = midpoint + self.inner_range
+
+        query = f"""
+            SELECT {self.SELECT_LABEL}
+            FROM BedVirtual_{assembly}
+            INNER JOIN Bed on BedVirtual_{assembly}.BedId = Bed.BedId
+            WHERE ({chromstart} < BedVirtual_{assembly}.ChromEnd) AND
+                  ({chromend} >= BedVirtual_{assembly}.ChromStart) AND
+                  ChromosomeId = {chromosomeid}
+        """.format(
+            assembly=assembly
+        )
+        query_result = self._database.cursor.execute(query).fetchall()
+        positions = self.array_from_query(query_result, chromstart, chromend)
+        labels = self.label_from_array(positions)
+
+        return labels
 
     @property
     def _database(self):
         process = self._get_process()
         return self.databases[process]
+
+    @abstractmethod
+    def array_from_query(
+        self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,
+    ) -> np.ndarray:
+        pass
+
+    def label_from_array(self, positions: np.ndarray) -> np.ndarray:
+        raise NotImplementedError

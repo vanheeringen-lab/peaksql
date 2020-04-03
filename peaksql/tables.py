@@ -38,6 +38,7 @@ BED = (
     "    BedId INTEGER PRIMARY KEY AUTOINCREMENT,"
     "    ConditionId,"
     "    ChromosomeId NOT NULL,"
+    "    DataValue NUMERIC,"  # bedgraph value
     "    Peak INT,"  # narrowPeak summit
     "    FOREIGN KEY(ChromosomeId) REFERENCES Chromosome(ChromosomeId),"
     "    FOREIGN KEY(ConditionId)  REFERENCES Condition(ConditionId)"
@@ -45,10 +46,10 @@ BED = (
 )
 
 # Virtual Bed table, complement of the BED table. Uses r*tree for faster queries
-BED_VIRT = (
-    f"BedVirtual USING rtree("
-    f"    BedId INT, "  # Foreign key not implemented :(
-    f"    ChromStart INT, "
-    f"    ChromEnd INT, "
-    f")"
-)
+# BED_VIRT = (
+#     f"BedVirtual USING rtree("
+#     f"    BedId INT, "  # Foreign key not implemented :(
+#     f"    ChromStart INT, "
+#     f"    ChromEnd INT, "
+#     f")"
+# )
