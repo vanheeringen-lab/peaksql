@@ -201,7 +201,7 @@ default is the assembly name)</p></li>
 <dl class="method">
 <dt id="peaksql.database.DataBase.add_data">
 <code class="sig-name descname">add_data</code><span class="sig-paren">(</span><em class="sig-param">data_path: str</em>, <em class="sig-param">assembly: str</em>, <em class="sig-param">condition: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.database.DataBase.add_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add data (bed or narrowPeak) to the database. The files are stored line by line</p>
+<dd><p>Add data (bed, narrowPeak, or bedgraph) to the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -241,10 +241,8 @@ index.</p>
 
 <dl class="method">
 <dt id="peaksql.datasets.base._DataSet.get_label">
-<em class="property">abstract </em><code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">assembly: str</em>, <em class="sig-param">chrom: str</em>, <em class="sig-param">chromstart: int</em>, <em class="sig-param">chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.base._DataSet.get_label" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the label belonging to the combination of assembly, chromosome, chromstart,
-and chromend.</p>
-<p>This function is overwritten by each DataSet to apply DataSet specific logic.</p>
+<code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">assembly: str</em>, <em class="sig-param">chrom: str</em>, <em class="sig-param">chromstart: int</em>, <em class="sig-param">chromend: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#peaksql.datasets.base._DataSet.get_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the label that corresponds to chromstart:chromend.</p>
 </dd></dl>
 
 <dl class="method">
@@ -259,20 +257,13 @@ and chromend.</p>
 </div>
 <div class="section" id="peaksql-datasets-bedregion">
 <h3>peaksql.datasets.bedregion<a class="headerlink" href="#peaksql-datasets-bedregion" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="peaksql.datasets.bedregion.BedRegionDataSet">
-<em class="property">class </em><code class="sig-prename descclassname">peaksql.datasets.bedregion.</code><code class="sig-name descname">BedRegionDataSet</code><span class="sig-paren">(</span><em class="sig-param">database: str</em>, <em class="sig-param">where: str = ''</em>, <em class="sig-param">seq_length: int = 200</em>, <em class="sig-param">label_func: str = 'any'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.datasets.bedregion.BedRegionDataSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">peaksql.datasets.bed._BedDataSet</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
-<p>The BedRegion DataSet</p>
-</dd></dl>
-
 </div>
 <div class="section" id="peaksql-datasets-narrowpeak-module">
 <h3>peaksql.datasets.narrowpeak module<a class="headerlink" href="#peaksql-datasets-narrowpeak-module" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="peaksql.datasets.narrowpeak.NarrowPeakDataSet">
-<em class="property">class </em><code class="sig-prename descclassname">peaksql.datasets.narrowpeak.</code><code class="sig-name descname">NarrowPeakDataSet</code><span class="sig-paren">(</span><em class="sig-param">database: str</em>, <em class="sig-param">where: str = ''</em>, <em class="sig-param">seq_length: int = 200</em>, <em class="sig-param">label_func: str = 'any'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">peaksql.datasets.bed._BedDataSet</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<em class="property">class </em><code class="sig-prename descclassname">peaksql.datasets.narrowpeak.</code><code class="sig-name descname">NarrowPeakDataSet</code><span class="sig-paren">(</span><em class="sig-param">database: str</em>, <em class="sig-param">where: str = ''</em>, <em class="sig-param">seq_length: int = 200</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#peaksql.datasets.narrowpeak.NarrowPeakDataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#peaksql.datasets.base._DataSet" title="peaksql.datasets.base._DataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">peaksql.datasets.base._DataSet</span></code></a></p>
 <p>The NarrowPeakDataSet expects that narrowPeak files have been added to the DataBase.</p>
 </dd></dl>
 
