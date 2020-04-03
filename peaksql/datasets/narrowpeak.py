@@ -9,7 +9,9 @@ class NarrowPeakDataSet(_DataSet):
     The NarrowPeakDataSet ...
     """
 
-    SELECT_LABEL = " Bed.ChromosomeId, Bed.ConditionId, BedVirtual.ChromStart, Bed.Peak"
+    SELECT_LABEL = (
+        " Bed.ChromosomeId, Bed.ConditionId, BedVirtual_{assembly}.ChromStart, Bed.Peak"
+    )
 
     def array_from_query(
         self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,

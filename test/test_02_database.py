@@ -55,16 +55,19 @@ class TestDataBase(unittest.TestCase):
         db.add_data("test/data/assembly1.bed", "assembly1")
         db.add_data("test/data/assembly2.bed", "assembly2")
         assert db.cursor.execute("SELECT COUNT(BedId) FROM Bed").fetchone() == (3,)
-        assert db.cursor.execute("SELECT COUNT(BedId) FROM BedVirtual").fetchone() == (
-            3,
-        )
+        assert db.cursor.execute(
+            "SELECT COUNT(BedId) FROM BedVirtual_assembly1"
+        ).fetchone() == (1,)
+        assert db.cursor.execute(
+            "SELECT COUNT(BedId) FROM BedVirtual_assembly2"
+        ).fetchone() == (2,)
         assert db.cursor.execute(
             "SELECT Chromosome, ChromStart - Offset, ChromEnd - Offset "
             "FROM BED B "
             "JOIN Chromosome C on B.ChromosomeId = C.ChromosomeId "
-            "JOIN BedVirtual BV on BV.BedId = B.BedId "
+            "JOIN BedVirtual_assembly2 BV on BV.BedId = B.BedId "
             "JOIN Assembly A on C.AssemblyId = A.AssemblyId "
-            "WHERE Assembly='assembly2' and Chromosome='chr1'"
+            "WHERE Chromosome='chr1'"
         ).fetchall() == [("chr1", 20, 40)]
 
     def test_205_add_narrowpeak(self):
@@ -72,16 +75,16 @@ class TestDataBase(unittest.TestCase):
         db.add_assembly("test/data/assembly1.fa")
         db.add_data("test/data/assembly1.narrowPeak", "assembly1")
         assert db.cursor.execute("SELECT COUNT(BedId) FROM Bed").fetchone() == (4,)
-        assert db.cursor.execute("SELECT COUNT(BedId) FROM BedVirtual").fetchone() == (
-            4,
-        )
+        assert db.cursor.execute(
+            "SELECT COUNT(BedId) FROM BedVirtual_assembly1"
+        ).fetchone() == (4,)
         assert db.cursor.execute(
             "SELECT Chromosome, ChromStart - Offset, ChromEnd - Offset "
             "FROM BED B "
             "JOIN Chromosome C on B.ChromosomeId = C.ChromosomeId "
-            "JOIN BedVirtual BV on BV.BedId = B.BedId "
+            "JOIN BedVirtual_assembly1 BV on BV.BedId = B.BedId "
             "JOIN Assembly A on C.AssemblyId = A.AssemblyId "
-            "WHERE Assembly='assembly1' and Chromosome='chr1'"
+            "WHERE Chromosome='chr1'"
         ).fetchall() == [("chr1", 0, 10), ("chr1", 20, 30)]
 
     def test_206_in_memory(self):

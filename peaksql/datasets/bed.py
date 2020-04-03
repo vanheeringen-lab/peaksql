@@ -9,7 +9,10 @@ class BedDataSet(_DataSet):
     The BedRegion ...
     """
 
-    SELECT_LABEL = " Bed.ConditionId, BedVirtual.ChromStart, BedVirtual.ChromEnd"
+    SELECT_LABEL = (
+        " Bed.ConditionId, BedVirtual_{assembly}.ChromStart, "
+        "BedVirtual_{assembly}.ChromEnd"
+    )
 
     def array_from_query(
         self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,

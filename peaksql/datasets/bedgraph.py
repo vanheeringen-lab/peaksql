@@ -10,7 +10,8 @@ class BedGraphDataSet(_DataSet):
     """
 
     SELECT_LABEL = (
-        " Bed.ConditionId, BedVirtual.ChromStart, BedVirtual.ChromEnd, Bed.DataValue "
+        " Bed.ConditionId, BedVirtual_{assembly}.ChromStart, "
+        "BedVirtual_{assembly}.ChromEnd, Bed.DataValue "
     )
 
     def __init__(self, *args, **kwargs):
@@ -50,6 +51,5 @@ class BedGraphDataSet(_DataSet):
             print(max_idx)
             print(value)
             positions[condition, min_idx:max_idx] = value
-            # positions[query[:, 0].astype(int), query[:, 1].astype(int):query[:, 2].astype(int)] = query[:, 3]
 
         return positions
