@@ -28,7 +28,7 @@ import peaksql
 
 # paths to our files
 db_file = 'peakSQL.sqlite'  # where to store our database
-assembly = "/path/to/hg19.fa"
+assembly = "/path/to/hg38.fa"
 data = "binding_sites.bed"
 
 # load data into database
