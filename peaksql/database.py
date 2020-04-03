@@ -207,11 +207,13 @@ class DataBase:
             self.cursor.execute(f"INSERT INTO Condition VALUES(NULL, {condition})")
 
         # get the
-        converter = self.cursor.execute(
+        _converter = self.cursor.execute(
             f"SELECT Chromosome, ChromosomeId, Offset FROM Chromosome "
             f"WHERE AssemblyId='{assembly_id}'"
         ).fetchall()
-        converter = {chrom: (chrom_id, offset) for chrom, chrom_id, offset in converter}
+        converter = {
+            chrom: (chrom_id, offset) for chrom, chrom_id, offset in _converter
+        }
 
         # get the current BedId we are at
         highest_id_query = self.cursor.execute(
