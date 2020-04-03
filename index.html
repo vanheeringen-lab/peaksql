@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>PeakSQL &mdash; PeakSQL  documentation</title>
+  <title>PeakSQL documentation &mdash; PeakSQL  documentation</title>
   
 
   
@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API" href="api.html" /> 
+    <link rel="next" title="PeakSQL" href="readme.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -79,15 +79,8 @@
               
             
             
-              <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">PeakSQL</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting started</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api.html">API</a></li>
-</ul>
-</li>
-</ul>
-</li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">PeakSQL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
 </ul>
 
@@ -134,13 +127,15 @@
     
       <li><a href="#">Docs</a> &raquo;</li>
         
-      <li>PeakSQL</li>
+      <li>PeakSQL documentation</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+            
+              <a href="https://github.com/vanheeringen-lab/peaksql/blob/master/docs/index.rst" class="fa fa-github"> Edit on GitHub</a>
+            
           
         
       </li>
@@ -153,52 +148,23 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <p><em>Note: This package is in active development and functionality might change or not work correctly (yet)!</em></p>
-<div class="section" id="peaksql">
-<h1>PeakSQL<a class="headerlink" href="#peaksql" title="Permalink to this headline">¶</a></h1>
-<a class="reference external image-reference" href="https://codeclimate.com/github/vanheeringen-lab/peaksql/maintainability"><img alt="Maintainability" src="https://api.codeclimate.com/v1/badges/d5f1443a164eb0d64d33/maintainability" /></a>
-<a class="reference external image-reference" href="https://codeclimate.com/github/vanheeringen-lab/peaksql/test_coverage"><img alt="Test Coverage" src="https://api.codeclimate.com/v1/badges/d5f1443a164eb0d64d33/test_coverage" /></a>
-<a class="reference external image-reference" href="https://github.com/vanheeringen-lab/peaksql/workflows/docs/badge.svg?branch=master"><img alt="docs" src="https://github.com/vanheeringen-lab/peaksql/workflows/docs/badge.svg?branch=master" /></a>
-<a class="reference external image-reference" href="https://github.com/vanheeringen-lab/peaksql/workflows/continuous-integration/badge.svg?branch=master"><img alt="continuous-integration" src="https://github.com/vanheeringen-lab/peaksql/workflows/continuous-integration/badge.svg?branch=master" /></a>
-<a class="reference external image-reference" href="https://github.com/vanheeringen-lab/peaksql/workflows/continuous-deployment/badge.svg?branch=master"><img alt="continuous-deployment" src="https://github.com/vanheeringen-lab/peaksql/workflows/continuous-deployment/badge.svg?branch=master" /></a>
-<p>Dynamic machine learning database for genomics. Supports common bed-like dataformats like <em>.bed</em>, and <em>.narrowPeak</em>. <em>bedgraph</em>; and the binary <em>bigwig</em> format.</p>
-<div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>PeakSQL can be installed through pip:</p>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install peaksql
-</pre></div>
-</div>
-<p>Or installed from source:</p>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/vanheeringen-lab/peaksql
-cd peaksql
-pip install .
-</pre></div>
-</div>
-</div>
-<div class="section" id="getting-started">
-<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>import peaksql
-
-# paths to our files
-db_file = &#39;peakSQL.sqlite&#39;  # where to store our database
-assembly = &quot;/path/to/hg38.fa&quot;
-data = &quot;binding_sites.bed&quot;
-
-# load data into database
-db = peaksql.database.DataBase(db_file)
-db.add_assembly(assembly, assembly=&quot;hg38&quot;, species=&quot;human&quot;)
-db.add_data(data, assembly=&quot;data&quot;)
-
-# now load as dataset
-dataset = peaksql.BedRegionDataSet(db_file, seq_length=101, stride=200)
-
-# use the dataset in your application
-for seq, label in dataset:
-    ...
-</pre></div>
-</div>
+  <div class="section" id="peaksql-documentation">
+<h1>PeakSQL documentation<a class="headerlink" href="#peaksql-documentation" title="Permalink to this headline">¶</a></h1>
+<p>PeakSQL is a dynamic database/dataloader combination for Next Generation Sequencing data.</p>
 <div class="toctree-wrapper compound">
-</div>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">PeakSQL</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#getting-started">Getting started</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#database">DataBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#dataset-loaders">DataSet loaders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-peaksql.util">Util</a></li>
+</ul>
+</li>
+</ul>
 </div>
 </div>
 
@@ -210,7 +176,7 @@ for seq, label in dataset:
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="api.html" class="btn btn-neutral float-right" title="API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="readme.html" class="btn btn-neutral float-right" title="PeakSQL" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>

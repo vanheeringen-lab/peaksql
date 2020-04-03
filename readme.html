@@ -1,0 +1,258 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>PeakSQL &mdash; PeakSQL  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API" href="api.html" />
+    <link rel="prev" title="PeakSQL documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> PeakSQL
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PeakSQL</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting started</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PeakSQL</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>PeakSQL</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            
+              <a href="https://github.com/vanheeringen-lab/peaksql/blob/master/docs/readme.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <p><em>Note: This package is in active development and functionality might change or not work correctly (yet)!</em></p>
+<div class="section" id="peaksql">
+<h1>PeakSQL<a class="headerlink" href="#peaksql" title="Permalink to this headline">¶</a></h1>
+<a class="reference external image-reference" href="https://badge.fury.io/py/peaksql"><img alt="PyPI version" src="https://badge.fury.io/py/peaksql.svg" /></a>
+<a class="reference external image-reference" href="https://anaconda.org/bioconda/peaksql"><img alt="Anaconda-Server Badge" src="https://anaconda.org/bioconda/peaksql/badges/version.svg" /></a>
+<a class="reference external image-reference" href="https://codeclimate.com/github/vanheeringen-lab/peaksql/maintainability"><img alt="Maintainability" src="https://api.codeclimate.com/v1/badges/d5f1443a164eb0d64d33/maintainability" /></a>
+<a class="reference external image-reference" href="https://codeclimate.com/github/vanheeringen-lab/peaksql/test_coverage"><img alt="Test Coverage" src="https://api.codeclimate.com/v1/badges/d5f1443a164eb0d64d33/test_coverage" /></a>
+<a class="reference external image-reference" href="https://vanheeringen-lab.github.io/peaksql/"><img alt="docs" src="https://github.com/vanheeringen-lab/peaksql/workflows/docs/badge.svg?branch=master" /></a>
+<a class="reference external image-reference" href="https://github.com/vanheeringen-lab/peaksql/actions?query=workflow%3Acontinuous-integration+branch%3Amaster"><img alt="continuous-integration" src="https://github.com/vanheeringen-lab/peaksql/workflows/continuous-integration/badge.svg?branch=master" /></a>
+<a class="reference external image-reference" href="https://github.com/vanheeringen-lab/peaksql/actions?query=workflow%3Acontinuous-deployment+branch%3Amaster"><img alt="continuous-deployment" src="https://github.com/vanheeringen-lab/peaksql/workflows/continuous-deployment/badge.svg?branch=master" /></a>
+<p>Dynamic machine learning database for genomics. Supports common bed-like dataformats like <em>.bed</em>, and <em>.narrowPeak</em>. <em>bedgraph</em>; and the binary <em>bigwig</em> format.</p>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>PeakSQL can be installed through pip:</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install peaksql
+</pre></div>
+</div>
+<p>Or installed with Conda (hosted on Bioconda):</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>conda install peaksql
+</pre></div>
+</div>
+<p>And finally, installed from source:</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/vanheeringen-lab/peaksql
+cd peaksql
+pip install .
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>import peaksql
+
+# paths to our files
+db_file = &#39;peakSQL.sqlite&#39;  # where to store our database
+assembly = &quot;/path/to/hg38.fa&quot;
+data = &quot;binding_sites.bed&quot;
+
+# load data into database
+db = peaksql.database.DataBase(db_file)
+db.add_assembly(assembly, assembly=&quot;hg38&quot;, species=&quot;human&quot;)
+db.add_data(data, assembly=&quot;data&quot;)
+
+# now load as dataset
+dataset = peaksql.BedRegionDataSet(db_file, seq_length=101, stride=200)
+
+# use the dataset in your application
+for seq, label in dataset:
+    ...
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api.html" class="btn btn-neutral float-right" title="API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="PeakSQL documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Maarten van der Sande
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
