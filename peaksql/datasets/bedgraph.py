@@ -25,17 +25,6 @@ class BedGraphDataSet(_DataSet):
             (len(self.all_conditions), chromend - chromstart), dtype=float
         )
 
-        # for condition_id, start, end, value in query:
-        #     min_idx = int(start - chromstart)
-        #     if min_idx < 0:
-        #         min_idx = 0
-        #
-        #     max_idx = int(end - chromstart)
-        #     if max_idx > positions.shape[1]:
-        #         max_idx = positions.shape[1]
-        #
-        #     positions[condition_id, min_idx:max_idx] = value
-
         if len(query):
             condition, min_idx, max_idx, value = np.split(np.array(query), 4, axis=1)
             min_idx -= chromstart
@@ -47,9 +36,6 @@ class BedGraphDataSet(_DataSet):
             max_idx = max_idx.astype(int).flatten()
             value = value.flatten()
 
-            print(min_idx)
-            print(max_idx)
-            print(value)
             positions[condition, min_idx:max_idx] = value
 
         return positions

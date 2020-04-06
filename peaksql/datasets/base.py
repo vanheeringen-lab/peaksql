@@ -237,8 +237,7 @@ class _DataSet(ABC, _Labeler):
             FROM BedVirtual_{assembly}
             INNER JOIN Bed on BedVirtual_{assembly}.BedId = Bed.BedId
             WHERE ({chromstart} < BedVirtual_{assembly}.ChromEnd) AND
-                  ({chromend} >= BedVirtual_{assembly}.ChromStart) AND
-                  ChromosomeId = {chromosomeid}
+                  ({chromend} >= BedVirtual_{assembly}.ChromStart)
         """.format(
             assembly=assembly
         )
