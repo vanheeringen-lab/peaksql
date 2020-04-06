@@ -41,10 +41,10 @@ data = "binding_sites.bed"
 # load data into database
 db = peaksql.database.DataBase(db_file)
 db.add_assembly(assembly, assembly="hg38", species="human")
-db.add_data(data, assembly="data")
+db.add_data(data, assembly="hg38")
 
 # now load as dataset
-dataset = peaksql.BedRegionDataSet(db_file, seq_length=101, stride=200)
+dataset = peaksql.BedDataSet(db_file, seq_length=101, stride=200)
 
 # use the dataset in your application
 for seq, label in dataset:
