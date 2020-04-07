@@ -158,10 +158,7 @@ class DataBase:
         assembly_id = self.cursor.lastrowid
 
         # now fill the chromosome table
-        offset = self.cursor.execute(
-            f"SELECT SUM(Size) FROM Assembly WHERE AssemblyId < {assembly_id}"
-        ).fetchone()[0]
-        offset = 0 if offset is None else offset
+        offset = 0
         for sequence_name, sequence in fasta.items():
             size = len(sequence)
             self.cursor.execute(
