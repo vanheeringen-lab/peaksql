@@ -247,6 +247,53 @@ class _DataSet(ABC, _Labeler):
 
         return labels
 
+    def downsample(self, ncpus: int = None):
+        """
+
+        """
+        if ncpus is None:
+            ncpus = 1
+
+        trues = []
+        falses = []
+        for i in range(len(self)):
+            site = self._index_to_site(i)
+            label = self.get_label(*site)
+            if label[0]:
+                trues.append(i)
+            else:
+                falses.append(i)
+
+        lowest = min([len(trues), len(falses)])
+        trues = np.random.choice(trues, lowest, replace=False)
+        falses = np.random.choice(falses, lowest, replace=False)
+
+        indices = np.sort(np.concatenate((trues, falses)))
+        new_chromosomes = [(None, None)]
+        new_positions = [[]]
+        ass_chrom_idx = 1
+        for index in indices:
+            while index >= self.cumsum[ass_chrom_idx]:
+                ass_chrom_idx += 1
+
+            if self.chromosomes[ass_chrom_idx] not in new_chromosomes:
+                new_chromosomes.append(self.chromosomes[ass_chrom_idx])
+                new_positions.append([])
+
+            new_positions[-1].append(
+                self.positions[ass_chrom_idx][index - self.cumsum[ass_chrom_idx - 1]]
+            )
+
+        self.chromosomes = new_chromosomes
+        self.positions = new_positions
+        self.cumsum = np.cumsum([len(pos) for pos in new_positions])
+
+    def upsample(self):
+        """
+
+        """
+        raise NotImplementedError
+
     @property
     def _database(self):
         process = self._get_process()
