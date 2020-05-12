@@ -113,7 +113,7 @@ class DataBase:
         """
         return [
             val[0]
-            for val in self.cursor.execute(f"SELECT Assembly FROM Assembly").fetchall()
+            for val in self.cursor.execute("SELECT Assembly FROM Assembly").fetchall()
         ]
 
     def add_assembly(
@@ -135,9 +135,9 @@ class DataBase:
             "It is currently not supported to add data with an in-memory " "database."
         )
         # set defaults if none provided
-        assembly = (
-            assembly if assembly else os.path.basename(assembly_path).split(".")[0]
-        )
+        if assembly is None:
+            assembly = "".join(os.path.basename(assembly_path).split(".")[:-1])
+
         species = species if species else assembly
         abs_path = os.path.abspath(assembly_path)
 
@@ -200,7 +200,7 @@ class DataBase:
             ".narrowPeak",
             ".bdg",
             ".bed",
-        ], f"The file extension you choose is not supported"
+        ], "The file extension you choose is not supported."
 
         # check if species it belongs to has already been added to the database
         assembly_id = self.cursor.execute(
@@ -258,7 +258,7 @@ class DataBase:
         bed["condition_id"] = condition_id
         bed["bedid"] = np.arange(highest_id, highest_id + bed.shape[0])
         bed[["chromosome_id", "offset"]] = pd.DataFrame(
-            [converter[chromname] for chromname in bed[0]]
+            [converter[str(chromname)] for chromname in bed[0]]
         )
         bed["chromstart"] += bed["offset"]
         bed["chromend"] += bed["offset"]

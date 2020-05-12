@@ -100,3 +100,22 @@ def binary_search(index: int, lens: np.ndarray) -> int:
             return mid
 
     assert False
+
+
+class MinimizedDataset:
+    """
+
+    """
+
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def __enter__(self):
+        self.databases = self.dataset.databases
+        self.fetchall = self.dataset.fetchall
+        self.dataset.databases = dict()
+        self.dataset.fetchall = None
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.dataset.databases = self.databases
+        self.dataset.fetchall = self.fetchall

@@ -1,8 +1,11 @@
-import numpy as np
-import multiprocessing
-import threading
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
+import math
+import threading
+
+import numpy as np
+from pathos.pools import ProcessPool
+import pathos
 
 from ..database import DataBase
 from .labeler import _Labeler
@@ -21,9 +24,12 @@ class _DataSet(ABC, _Labeler):
     )
     SELECT_LABEL: str
 
+    # @profile
     def __init__(self, database: str, where: str = "", seq_length: int = 200, **kwargs):
         # check for valid input
-        if ("stride" in kwargs) == ("nr_rand_pos" in kwargs):  # xor
+        if ("stride" in kwargs) + ("nr_rand_pos" in kwargs) + (
+            "nr_balanced_rand_pos" in kwargs
+        ) != 1:  # xor
             raise ValueError("choose a stride OR a number of random positions")
 
         # store general stuff
@@ -33,6 +39,9 @@ class _DataSet(ABC, _Labeler):
         self.in_memory = kwargs.get("in_memory", False)
         self.iter_index = 0
 
+        # initialize the label function
+        _Labeler.__init__(self, label_func=kwargs.get("label_func", "any"))
+
         # sql(ite) lookup
         self.WHERE = where
         query = (
@@ -40,6 +49,14 @@ class _DataSet(ABC, _Labeler):
         )
         self._database.cursor.execute(query)
         self.fetchall = self._database.cursor.fetchall()
+
+        # get all the conditions and their id in the database
+        self.all_conditions = {
+            k: v
+            for k, v in self._database.cursor.execute(
+                "SELECT DISTINCT Condition, ConditionId FROM Condition"
+            ).fetchall()
+        }
 
         # get the genomic positions of our indices
         if "stride" in kwargs:
@@ -52,19 +69,18 @@ class _DataSet(ABC, _Labeler):
             self.chromosomes, self.cumsum, self.positions = self.get_random_positions(
                 self.seq_length, self.nr_rand_pos
             )
-
-        # get all the conditions and their id in the database
-        self.all_conditions = {
-            k: v
-            for k, v in self._database.cursor.execute(
-                "SELECT DISTINCT Condition, ConditionId FROM Condition"
-            ).fetchall()
-        }
+        if "nr_balanced_rand_pos" in kwargs:
+            self.nr_balanced_rand_pos = kwargs["nr_balanced_rand_pos"]
+            (
+                self.chromosomes,
+                self.cumsum,
+                self.positions,
+            ) = self.get_balanced_random_positions(
+                self.seq_length, self.nr_balanced_rand_pos
+            )
 
         # mark fetchall for garbage collection (large and we don't need it anymore)
         del self.fetchall
-
-        _Labeler.__init__(self, label_func=kwargs.get("label_func", "any"))
 
     def __len__(self) -> int:
         """
@@ -95,7 +111,7 @@ class _DataSet(ABC, _Labeler):
         automatically start new sql(ite) connections and pyfaidx instances. This allows
         us to "stream" our data parallel in e.g. a Pytorch dataloader.
         """
-        process = multiprocessing.current_process().name + str(
+        process = pathos.helpers.mp.current_process().name + str(
             threading.current_thread().ident
         )
         if process not in self.databases:
@@ -124,7 +140,7 @@ class _DataSet(ABC, _Labeler):
     ) -> Tuple[list, np.ndarray, np.ndarray]:
         """
         Calculate a map that connects __getitem__ indices to (assembly, chrom,
-        chromstart) triplet. The positions are sampled accross the query with an even
+        chromstart) triplet. The positions are sampled across the query with an even
         stride.
 
         The first return value is a list of (assembly, chrom) pairs, the second list
@@ -153,12 +169,13 @@ class _DataSet(ABC, _Labeler):
 
         return non_empty_combis, cumsum, startpos
 
+    # @profile
     def get_random_positions(
         self, seq_length: int, nr_rand_pos: int
     ) -> Tuple[list, np.ndarray, np.ndarray]:
         """
         Calculate a map that connects __getitem__ indices to (assembly, chrom,
-        chromstart) triplet. The positions are sampled accross the query randomly, but
+        chromstart) triplet. The positions are sampled across the query randomly, but
         proportional to the size of each chromosome.
 
         The first return value is a list of (assembly, chrom) pairs, the second list
@@ -204,6 +221,71 @@ class _DataSet(ABC, _Labeler):
 
         return non_empty_combis, cumsum, startpos
 
+    def get_balanced_random_positions(
+        self, seq_length: int, nr_rand_pos: int, cores: int = None
+    ) -> Tuple[list, np.ndarray, np.ndarray]:
+        """
+        Calculate a map that connects __getitem__ indices to (assembly, chrom,
+        chromstart) triplet. The positions are sampled across the query randomly, but
+        proportional to the size of each chromosome.
+
+        The first return value is a list of (assembly, chrom) pairs, the second list
+        consists of the cumulative sum of the number of indices that belong to this
+        assembly, chrom pair, and the third list contains all chromstarts of the
+        sequences. This allows for a decently fast and memory-efficient lookup of
+        genomic positions corresponding to an index.
+        """
+        if cores is None:
+            cores = pathos.helpers.mp.cpu_count()
+
+        # setup a processing pool
+        pool = ProcessPool(nodes=cores)
+
+        true_goal = false_goal = nr_rand_pos // 2 + (nr_rand_pos % 2 > 0)
+        non_empty_combis = {(None, None): []}
+        trues = falses = total = 1
+
+        while trues + falses < nr_rand_pos:
+            # we overestimate a bit for faster convergence
+            nr_pos = int((nr_rand_pos * (total / trues) - total) * 1.05)
+            if nr_pos > 1_000_000:
+                nr_pos = 1_000_000
+
+            s_non_empty_combis, _, s_startpos = self.get_random_positions(
+                seq_length, nr_pos
+            )
+            s_endpos = [start + seq_length for start in s_startpos]
+
+            args = []
+            for (assembly, chrom), chromstarts, chromends in zip(
+                s_non_empty_combis, s_startpos, s_endpos
+            ):
+                for chromstart, chromend in zip(chromstarts, chromends):
+                    args.append((assembly, chrom, chromstart, chromend))
+
+            # turns args into a list of chunks to spread across cores
+            chunksize = math.ceil(nr_pos / cores)
+            chunk_args = [
+                args[i : i + chunksize] for i in range(0, len(args), chunksize)
+            ]
+            with util.MinimizedDataset(self):
+                labels = list(pool.map(self.__labels_from_array, chunk_args))
+
+            for i, arg in enumerate(args):
+                label = labels[i // chunksize][i % chunksize]
+                if label[0] and trues <= true_goal:
+                    non_empty_combis.setdefault(tuple(arg[:2]), []).append(arg[2])
+                    trues += 1
+                elif label[0] == False and falses <= false_goal:  # noqa: E712
+                    non_empty_combis.setdefault(tuple(arg[:2]), []).append(arg[2])
+                    falses += 1
+                total += 1
+
+        startpos = list(non_empty_combis.values())
+        cumsum = np.cumsum([len(positions) for positions in startpos])
+        non_empty_combis = list(non_empty_combis.keys())
+        return non_empty_combis, cumsum, startpos
+
     def get_onehot_sequence(
         self, assembly: str, chrom: str, chromstart: int, chromend: int
     ) -> np.ndarray:
@@ -237,8 +319,7 @@ class _DataSet(ABC, _Labeler):
             FROM BedVirtual_{assembly}
             INNER JOIN Bed on BedVirtual_{assembly}.BedId = Bed.BedId
             WHERE ({chromstart} < BedVirtual_{assembly}.ChromEnd) AND
-                  ({chromend} >= BedVirtual_{assembly}.ChromStart) AND
-                  ChromosomeId = {chromosomeid}
+                  ({chromend} >= BedVirtual_{assembly}.ChromStart)
         """.format(
             assembly=assembly
         )
@@ -247,6 +328,54 @@ class _DataSet(ABC, _Labeler):
         labels = self.label_from_array(positions)
 
         return labels
+
+    def downsample(self, ncpus: int = None):
+        """
+
+        """
+        raise NotImplementedError
+        if ncpus is None:
+            ncpus = 1
+
+        trues = []
+        falses = []
+        for i in range(len(self)):
+            site = self._index_to_site(i)
+            label = self.get_label(*site)
+            if label[0]:
+                trues.append(i)
+            else:
+                falses.append(i)
+
+        lowest = min([len(trues), len(falses)])
+        trues = np.random.choice(trues, lowest, replace=False)
+        falses = np.random.choice(falses, lowest, replace=False)
+
+        indices = np.sort(np.concatenate((trues, falses)))
+        new_chromosomes = [(None, None)]
+        new_positions = [[]]
+        ass_chrom_idx = 1
+        for index in indices:
+            while index >= self.cumsum[ass_chrom_idx]:
+                ass_chrom_idx += 1
+
+            if self.chromosomes[ass_chrom_idx] not in new_chromosomes:
+                new_chromosomes.append(self.chromosomes[ass_chrom_idx])
+                new_positions.append([])
+
+            new_positions[-1].append(
+                self.positions[ass_chrom_idx][index - self.cumsum[ass_chrom_idx - 1]]
+            )
+
+        self.chromosomes = new_chromosomes
+        self.positions = new_positions
+        self.cumsum = np.cumsum([len(pos) for pos in new_positions])
+
+    def upsample(self):
+        """
+
+        """
+        raise NotImplementedError
 
     @property
     def _database(self):
@@ -259,5 +388,8 @@ class _DataSet(ABC, _Labeler):
     ) -> np.ndarray:
         pass
 
-    def label_from_array(self, positions: np.ndarray) -> np.ndarray:
-        raise NotImplementedError
+    def __labels_from_array(self, positions: np.ndarray) -> np.ndarray:
+        """
+
+        """
+        return [self.get_label(*pos) for pos in positions]

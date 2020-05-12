@@ -9,9 +9,10 @@ class NarrowPeakDataSet(_DataSet):
     The NarrowPeakDataSet expects that narrowPeak files have been added to the DataBase.
     """
 
-    SELECT_LABEL = (
-        " Bed.ChromosomeId, Bed.ConditionId, BedVirtual_{assembly}.ChromStart, Bed.Peak"
-    )
+    SELECT_LABEL = " Bed.ConditionId, BedVirtual_{assembly}.ChromStart, Bed.Peak"
+
+    def __init__(self, *args, **kwargs):
+        _DataSet.__init__(self, *args, **kwargs)
 
     def array_from_query(
         self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,
