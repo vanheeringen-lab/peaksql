@@ -113,7 +113,7 @@ class DataBase:
         """
         return [
             val[0]
-            for val in self.cursor.execute(f"SELECT Assembly FROM Assembly").fetchall()
+            for val in self.cursor.execute("SELECT Assembly FROM Assembly").fetchall()
         ]
 
     def add_assembly(
@@ -200,7 +200,7 @@ class DataBase:
             ".narrowPeak",
             ".bdg",
             ".bed",
-        ], f"The file extension you choose is not supported"
+        ], "The file extension you choose is not supported."
 
         # check if species it belongs to has already been added to the database
         assembly_id = self.cursor.execute(
