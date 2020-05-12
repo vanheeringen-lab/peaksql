@@ -11,6 +11,9 @@ class NarrowPeakDataSet(_DataSet):
 
     SELECT_LABEL = " Bed.ConditionId, BedVirtual_{assembly}.ChromStart, Bed.Peak"
 
+    def __init__(self, *args, **kwargs):
+        _DataSet.__init__(self, *args, **kwargs)
+
     def array_from_query(
         self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,
     ) -> np.ndarray:

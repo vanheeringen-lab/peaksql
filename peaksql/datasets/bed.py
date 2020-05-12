@@ -14,6 +14,9 @@ class BedDataSet(_DataSet):
         "BedVirtual_{assembly}.ChromEnd"
     )
 
+    def __init__(self, *args, **kwargs):
+        _DataSet.__init__(self, *args, **kwargs)
+
     def array_from_query(
         self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,
     ) -> np.ndarray:
