@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 import math
 import threading
 
@@ -235,6 +235,10 @@ class _DataSet(ABC, _Labeler):
         sequences. This allows for a decently fast and memory-efficient lookup of
         genomic positions corresponding to an index.
         """
+        get_label = getattr(self, "get_label", None)
+        if not callable(get_label):
+            raise NotImplementedError("Can not label ")
+
         if cores is None:
             cores = pathos.helpers.mp.cpu_count()
 
@@ -242,7 +246,7 @@ class _DataSet(ABC, _Labeler):
         pool = ProcessPool(nodes=cores)
 
         true_goal = false_goal = nr_rand_pos // 2 + (nr_rand_pos % 2 > 0)
-        non_empty_combis = {(None, None): []}
+        d_non_empty_combis: Dict[Tuple[Any, ...], List] = {(None, None): []}
         trues = falses = total = 1
 
         while trues + falses < nr_rand_pos:
@@ -274,16 +278,16 @@ class _DataSet(ABC, _Labeler):
             for i, arg in enumerate(args):
                 label = labels[i // chunksize][i % chunksize]
                 if label[0] and trues <= true_goal:
-                    non_empty_combis.setdefault(tuple(arg[:2]), []).append(arg[2])
+                    d_non_empty_combis.setdefault(tuple(arg[:2]), []).append(arg[2])
                     trues += 1
                 elif label[0] == False and falses <= false_goal:  # noqa: E712
-                    non_empty_combis.setdefault(tuple(arg[:2]), []).append(arg[2])
+                    d_non_empty_combis.setdefault(tuple(arg[:2]), []).append(arg[2])
                     falses += 1
                 total += 1
 
-        startpos = list(non_empty_combis.values())
+        startpos = list(d_non_empty_combis.values())
         cumsum = np.cumsum([len(positions) for positions in startpos])
-        non_empty_combis = list(non_empty_combis.keys())
+        non_empty_combis = list(d_non_empty_combis.keys())
         return non_empty_combis, cumsum, startpos
 
     def get_onehot_sequence(
@@ -387,6 +391,9 @@ class _DataSet(ABC, _Labeler):
         self, query: List[Tuple[int, int, int]], chromstart: int, chromend: int,
     ) -> np.ndarray:
         pass
+
+    def label_from_array(self, positions: np.ndarray) -> np.ndarray:
+        raise NotImplementedError
 
     def __labels_from_array(self, positions: np.ndarray) -> np.ndarray:
         """
