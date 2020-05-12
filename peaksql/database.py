@@ -200,7 +200,7 @@ class DataBase:
             ".narrowPeak",
             ".bdg",
             ".bed",
-        ], "The file extension you choose is not supported."
+        ], "The file extension you supplied is not supported."
 
         # check if species it belongs to has already been added to the database
         assembly_id = self.cursor.execute(
